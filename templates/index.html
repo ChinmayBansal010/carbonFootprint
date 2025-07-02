@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🌱 Carbon Footprint Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-6">
+
+<div class="w-full max-w-3xl bg-white shadow-xl rounded-xl p-8 space-y-6">
+    <h1 class="text-3xl font-bold text-green-600 text-center">🌱 Carbon Footprint Calculator (NLP Mode)</h1>
+
+    <form method="POST" class="space-y-4">
+        <textarea
+            name="user_input"
+            rows="8"
+            placeholder="Describe your activities (e.g. I rode 10 km by cab, used 12 kWh electricity, etc.)"
+            class="w-full p-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 resize-y"
+        >{{ user_input or "" }}</textarea>
+        <button
+            type="submit"
+            class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold transition duration-200"
+        >Calculate</button>
+    </form>
+
+    {% if result %}
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
+        <h2 class="text-xl font-semibold text-green-700">🌍 Total Emissions: {{ result.total_emission }} kg CO₂</h2>
+
+        <div>
+            <h3 class="font-medium text-gray-700">📊 Breakdown:</h3>
+            <ul class="list-disc list-inside text-sm space-y-1 mt-2">
+                <li>🚗 <strong>Transport:</strong> {{ result.transport_total }} kg</li>
+                <li>⚡ <strong>Electricity:</strong> {{ result.electricity_kwh }} kg</li>
+                <li>🥩 <strong>Food:</strong> {{ result.food_total }} kg</li>
+                <li>🛍️ <strong>Shopping:</strong> {{ result.shopping_spend }} kg</li>
+                <li>✈️ <strong>Flight:</strong> {{ result.flight_km }} kg</li>
+                <li>💧 <strong>Water:</strong> {{ result.water_liters }} kg</li>
+                <li>🧴 <strong>Plastic:</strong> {{ result.plastic_kg }} kg</li>
+            </ul>
+        </div>
+
+        <form method="POST" action="/download-report">
+            <input type="hidden" name="user_input" value="{{ user_input }}">
+            <button
+                type="submit"
+                class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm"
+            >📄 Download Report</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
