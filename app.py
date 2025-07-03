@@ -72,6 +72,16 @@ def flatten_transport_factors():
         all_factors.update(category)
     return all_factors
 
+def generate_tips(result):
+    tips = []
+    if result['transport_total'] > 50:
+        tips.append("Try to reduce personal vehicle usage by using public transport or cycling.")
+    if result['food_total'] > 30:
+        tips.append("Cut down on high-impact foods like beef or processed meat.")
+    if result['plastic_kg'] > 2:
+        tips.append("Reduce plastic usage and switch to reusable alternatives.")
+    return tips
+
 # Main Calculation
 def calculate_carbon(
     transport_data={},               # e.g., {"car": 10, "metro": 5}
@@ -172,6 +182,10 @@ def calculate_carbon(
     # 🌍 Final Total
     result["total_emission"] = round(total, 2)
     result["unknown_inputs"] = unknowns
+    
+    trees_required = round(result['total_emission'] / 21, 1)  # 1 tree absorbs ~21 kg CO₂/year
+    result["trees_required"] = trees_required
+    result["tips"] = generate_tips(result)
     return result
 
 def extract_number(groups):
