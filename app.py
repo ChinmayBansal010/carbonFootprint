@@ -5,6 +5,7 @@ from io import BytesIO
 
 app = Flask(__name__)
 
+# Constants
 TRANSPORT_FACTORS = {
     "personal": {
         "car": 0.12,
@@ -72,25 +73,111 @@ def flatten_transport_factors():
         all_factors.update(category)
     return all_factors
 
+def convert_to_standard(num, unit):
+    if num is None:
+        return 0
+    try:
+        value = float(num)
+    except ValueError:
+        return 0
+    if not unit:
+        return value
+    unit = unit.lower()
+    if unit in ["g", "gram", "grams"]:
+        return value / 1000
+    elif unit in ["ml", "milliliter", "milliliters"]:
+        return value / 1000
+    elif unit in ["kg", "kgs", "kilogram", "kilograms"]:
+        return value
+    elif unit in ["l", "liters", "litres", "liter"]:
+        return value
+    elif unit in ["km", "kilometers", "kilometres"]:
+        return value
+    elif unit in ["miles"]:
+        return value * 1.60934
+    return value
+def is_overlapping(new_span, spans):
+    for span in spans:
+        if not (new_span[1] <= span[0] or new_span[0] >= span[1]):
+            return True
+    return False
+
+
+# Tips and Rewards
 def generate_tips(result):
     tips = []
-    if result['transport_total'] > 50:
-        tips.append("Try to reduce personal vehicle usage by using public transport or cycling.")
-    if result['food_total'] > 30:
-        tips.append("Cut down on high-impact foods like beef or processed meat.")
-    if result['plastic_kg'] > 2:
-        tips.append("Reduce plastic usage and switch to reusable alternatives.")
+
+    transport = result.get("transport_total", 0)
+    if transport > 50:
+        tips.append(f"Your transport emissions are quite high ({transport} kg CO₂). Try switching to public transport, biking, or walking more often.")
+
+    food = result.get("food_total", 0)
+    if food > 30:
+        tips.append(f"Your food-related emissions are {food} kg CO₂. Consider reducing red meat and processed foods, and try more plant-based meals.")
+
+    plastic = result.get("plastic_kg", 0)
+    if plastic > 2:
+        tips.append(f"You used {plastic} kg of plastic. Try shifting to reusable or biodegradable alternatives to cut down plastic impact.")
+
+    electricity = result.get("electricity_kwh", 0)
+    if electricity > 20:
+        tips.append(f"You consumed {electricity} kWh of electricity. Reduce usage by unplugging unused devices and using energy-efficient appliances.")
+
+    shopping = result.get("shopping_spend", 0)
+    if shopping > 10:
+        tips.append(f"Your shopping emissions are {shopping} kg CO₂. Consider buying only what you need and supporting eco-friendly brands.")
+
+    water = result.get("water_liters", 0)
+    if water > 100:
+        tips.append(f"You used {water} liters of water. Try shorter showers, fixing leaks, and using water-efficient fixtures.")
+
+    total = result.get("total_emission", 0)
+    if total > 1000:
+        tips.append(f"Your total footprint is {total} kg CO₂. Setting monthly sustainability goals can help you bring this down over time.")
+
+    if total < 200:
+        tips.append("Great job! Your footprint is impressively low. Keep up the eco-friendly habits!")
+
     return tips
+
+def assign_badges(result):
+    badges = []
+
+    if result["total_emission"] < 100:
+        badges.append("Low Carbon Hero")
+    
+    if result["total_emission"] < 4000:
+        badges.append("Below Global Average")
+
+    if result.get("plastic_kg", 0) < 1:
+        badges.append("Plastic Reducer")
+
+    if result.get("transport_total", 0) < 10:
+        badges.append("🚶 Eco Commuter")
+
+    if result.get("food_total", 0) < 5:
+        badges.append("Green Eater")
+
+    if result.get("electricity_kwh", 0) < 10:
+        badges.append("Energy Saver")
+
+    if result.get("shopping_spend", 0) < 2:
+        badges.append("Minimal Shopper")
+
+    if result.get("water_liters", 0) < 10:
+        badges.append("Water Wise")
+
+    return badges
 
 # Main Calculation
 def calculate_carbon(
-    transport_data={},               # e.g., {"car": 10, "metro": 5}
+    transport_data={},            
     electricity_kwh=0,
-    food_data={},                    # e.g., {"chicken": 0.4, "milk": 1.0}
+    food_data={},       
     shopping_spend=0,
     shopping_type="clothes",
     flight_km=0,
-    flight_type="domestic",         # renamed from flight_class
+    flight_type="domestic",
     water_liters=0,
     water_type="tap",
     plastic_kg=0,
@@ -100,7 +187,7 @@ def calculate_carbon(
     total = 0
     unknowns = {"food": [], "plastic": []}
 
-    # 🚗 Transport
+    # Transport
     all_transport = flatten_transport_factors()
     transport_emissions = 0
     transport_details = {}
@@ -115,12 +202,12 @@ def calculate_carbon(
     result["transport_total"] = round(transport_emissions, 2)
     total += transport_emissions
 
-    # ⚡ Electricity
+    # Electricity
     elec_emission = round(electricity_kwh * 0.7, 2)
     result["electricity_kwh"] = elec_emission
     total += elec_emission
 
-    # 🥩 Food
+    # Food
     food_emissions = 0
     food_breakdown = {}
     for item, qty in food_data.items():
@@ -137,13 +224,13 @@ def calculate_carbon(
     result["food_total"] = round(food_emissions, 2)
     total += food_emissions
 
-    # 🛒 Shopping
+    # Shopping
     shop_factor = SHOPPING_FACTORS.get(shopping_type.lower(), 1.5)
     shop_emission = round((shopping_spend / 100) * shop_factor, 2)
     result["shopping_spend"] = shop_emission
     total += shop_emission
 
-    # ✈️ Flights
+    # Flights
     if flight_km > 0 and flight_type:
         key = "flight_" + flight_type.lower()
         air_factor = TRANSPORT_FACTORS["air"].get(key, 0.18)
@@ -151,13 +238,13 @@ def calculate_carbon(
         result["flight_km"] = flight_emission
         total += flight_emission
 
-    # 🚿 Water
+    # Water
     water_factor = WATER_FACTORS.get(water_type.lower(), 0.25)
     water_emission = round((water_liters / 100) * water_factor, 2)
     result["water_liters"] = water_emission
     total += water_emission
 
-    # 🧴 Plastic
+    # Plastic
     plastic_type = plastic_type.upper()
     plastic_factor = PLASTIC_FACTORS.get(plastic_type, None)
     if plastic_factor is None:
@@ -167,7 +254,7 @@ def calculate_carbon(
     result["plastic_kg"] = plastic_emission
     total += plastic_emission
 
-    # 📊 Category Breakdown
+    # Category Breakdown
     if total > 0:
         result["category_percentages"] = {
             "transport": round(transport_emissions / total * 100, 1),
@@ -179,13 +266,15 @@ def calculate_carbon(
             "plastic": round(plastic_emission / total * 100, 1)
         }
 
-    # 🌍 Final Total
+    # Final Total
     result["total_emission"] = round(total, 2)
     result["unknown_inputs"] = unknowns
     
-    trees_required = round(result['total_emission'] / 21, 1)  # 1 tree absorbs ~21 kg CO₂/year
+    trees_required = round(result['total_emission'] / 21, 1)
     result["trees_required"] = trees_required
     result["tips"] = generate_tips(result)
+    result["badges"] = assign_badges(result)
+    
     return result
 
 def extract_number(groups):
@@ -228,38 +317,6 @@ def parse_input_to_data(user_input):
 
     for alias, replacement in aliases.items():
         user_input = re.sub(rf"\b{re.escape(alias)}\b", replacement, user_input)
-
-    # Helper for unit conversion
-    def convert_to_standard(num, unit):
-        if num is None:
-            return 0
-        try:
-            value = float(num)
-        except ValueError:
-            return 0
-        if not unit:
-            return value
-        unit = unit.lower()
-        if unit in ["g", "gram", "grams"]:
-            return value / 1000
-        elif unit in ["ml", "milliliter", "milliliters"]:
-            return value / 1000
-        elif unit in ["kg", "kgs", "kilogram", "kilograms"]:
-            return value
-        elif unit in ["l", "liters", "litres", "liter"]:
-            return value
-        elif unit in ["km", "kilometers", "kilometres"]:
-            return value
-        elif unit in ["miles"]:
-            return value * 1.60934
-        return value
-
-    # Overlap check helper
-    def is_overlapping(new_span, spans):
-        for span in spans:
-            if not (new_span[1] <= span[0] or new_span[0] >= span[1]):
-                return True
-        return False
 
     # --- TRANSPORT ---
     matched_transport_spans = []
@@ -357,13 +414,8 @@ def parse_input_to_data(user_input):
     # --- FLIGHT ---
     matched_flight_spans = []
     flight_patterns = [
-        # Case 1: distance (with unit) followed soon by "flight" or flight type word
         r"(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s+(domestic|international|business|economy)?\s*flight",
-        
-        # Case 2: "flight" or flight type word followed soon by distance (with unit)
         r"(domestic|international|business|economy)?\s*flight\s+of\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-        
-        # Case 3: "flight" followed by distance and optional flight type anywhere after
         r"flight.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?(domestic|international|business|economy)?"
     ]
     for pattern in flight_patterns:
@@ -381,16 +433,13 @@ def parse_input_to_data(user_input):
             if distance and unit:
                 flight_km += convert_to_standard(distance, unit)
                 matched_flight_spans.append(span)
+                
     # --- WATER ---
     matched_water_spans = []
     water_patterns = [
-        # Number + unit before water and optional type
         r"(\d+(\.\d+)?)\s*(liters?|litres?|l|ml).*?(tap|bottled)?\s*water",
-        # Type before water and number + unit after
         r"(tap|bottled)\s*water.*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
-        # Water followed by type then number + unit
         r"water\s*(tap|bottled).*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
-        # drank X liters of bottled water or similar phrasing
         r"drank\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*of\s*(tap|bottled)?\s*water"
     ]
     for pattern in water_patterns:
@@ -408,24 +457,21 @@ def parse_input_to_data(user_input):
                 break
         if matched:
             break
+        
     # --- PLASTIC ---
     plastic_patterns = [
         r"used\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*(of\s*)?(pet|hdpe|pvc)?\s*plastic",
         r"(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*(of\s*)?(pet|hdpe|pvc)?\s*plastic",
         r"plastic.*?(pet|hdpe|pvc)?\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)"
     ]
-
     matched = False
     for pattern in plastic_patterns:
         if matched:
             break
         for match in re.finditer(pattern, user_input):
             groups = match.groups()
-            # extract number
             num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
-            # extract unit
             unit = next((g for g in groups if g and g.lower() in ["kg", "g", "gram", "grams"]), None)
-            # extract plastic type
             ptype = next((g for g in groups if g and g.lower() in ["pet", "hdpe", "pvc"]), None)
             if ptype:
                 plastic_type = ptype.upper()
@@ -433,16 +479,17 @@ def parse_input_to_data(user_input):
                 plastic_kg += convert_to_standard(num, unit)
                 matched = True
                 break
-
-    print("🚗 Transport Data:", transport_data)
-    print("⚡ Electricity (kWh):", electricity_kwh)
-    print("🥩 Food Data:", food_data)
-    print("🛒 Shopping Spend:", shopping_spend)
-    print("✈️ Flight KM:", flight_km)
-    print("🛫 Flight Type:", flight_type)
-    print("💧 Water (liters):", water_liters)
-    print("🧴 Plastic (kg):", plastic_kg)
-    print("🧴 Plastic Type:", plastic_type)
+    
+    #* Debug Print
+    # print("Transport Data:", transport_data)
+    # print("Electricity (kWh):", electricity_kwh)
+    # print("Food Data:", food_data)
+    # print("Shopping Spend:", shopping_spend)
+    # print("Flight KM:", flight_km)
+    # print("Flight Type:", flight_type)
+    # print("Water (liters):", water_liters)
+    # print("Plastic (kg):", plastic_kg)
+    # print("Plastic Type:", plastic_type)
 
     return calculate_carbon(
         transport_data=transport_data,
@@ -475,16 +522,16 @@ def download_report():
     user_input = request.form.get("user_input", "")
     result = parse_input_to_data(user_input)
     summary = f"""
-Total Emissions: {result['total_emission']} kg CO₂
-Breakdown:
-Transport: {result['transport_total']} kg
-Electricity: {result['electricity_kwh']} kg
-Food: {result['food_total']} kg
-Shopping: {result['shopping_spend']} kg
-Flight: {result.get('flight_km', 0)} kg
-Water: {result['water_liters']} kg
-Plastic: {result['plastic_kg']} kg
-"""
+        Total Emissions: {result['total_emission']} kg CO₂
+        Breakdown:
+        Transport: {result['transport_total']} kg
+        Electricity: {result['electricity_kwh']} kg
+        Food: {result['food_total']} kg
+        Shopping: {result['shopping_spend']} kg
+        Flight: {result.get('flight_km', 0)} kg
+        Water: {result['water_liters']} kg
+        Plastic: {result['plastic_kg']} kg
+        """
     buffer = BytesIO()
     buffer.write(summary.encode())
     buffer.seek(0)
