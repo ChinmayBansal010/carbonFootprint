@@ -1,15 +1,9 @@
 from flask import Flask, request, render_template, send_file
 import re
 import os
-import requests
-import json
 from io import BytesIO
 
 app = Flask(__name__)
-
-# HF_TOKEN = os.getenv("HF_TOKEN")
-HF_TOKEN = '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'
-HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.1"
 
 TRANSPORT_FACTORS = {
     "personal": {
