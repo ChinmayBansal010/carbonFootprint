@@ -1,11 +1,15 @@
 from flask import Flask, request, render_template, send_file
 import re
 import os
+import requests
+import json
 from io import BytesIO
 
 app = Flask(__name__)
 
-# Constants
+# HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = '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'
+HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.1"
 
 TRANSPORT_FACTORS = {
     "personal": {
@@ -70,7 +74,7 @@ FOOD_FACTORS = {
 # Utility
 def flatten_transport_factors():
     all_factors = {}
-    for category in TRANSPORT_FACTORS.values():
+    for key, category in TRANSPORT_FACTORS.items():
         all_factors.update(category)
     return all_factors
 
@@ -150,7 +154,8 @@ def calculate_carbon(
     total += water_emission
 
     # 🧴 Plastic
-    plastic_factor = PLASTIC_FACTORS.get(plastic_type.upper(), None)
+    plastic_type = plastic_type.upper()
+    plastic_factor = PLASTIC_FACTORS.get(plastic_type, None)
     if plastic_factor is None:
         unknowns["plastic"].append(plastic_type)
         plastic_factor = 5.0
@@ -182,6 +187,7 @@ def extract_number(groups):
     return 0
 
 def parse_input_to_data(user_input):
+    import re
     user_input = user_input.lower()
     transport_data = {}
     food_data = {}
@@ -195,75 +201,207 @@ def parse_input_to_data(user_input):
     plastic_kg = 0
     plastic_type = "PET"
 
-    for mode in flatten_transport_factors().keys():
+    aliases = {
+        "scooty": "electric_scooter",
+        "scooter": "electric_scooter",
+        "bike": "bike",
+        "ev": "electric_car",
+        "electric bike": "electric_bike",
+        "metro train": "metro",
+        "cab": "cab",
+        "rickshaw": "auto",
+        "auto rickshaw": "auto",
+        "train": "train",
+        "aeroplane": "flight",
+        "airplane": "flight",
+        "cycle": "bicycle",
+        "walked": "walk",
+        "e-car": "electric_car",
+        "e-bike": "electric_bike",
+    }
+
+    def convert_to_standard(num, unit):
+        if num is None:
+            return 0
+        try:
+            value = float(num)
+        except ValueError:
+            return 0
+        if not unit:
+            return value
+        unit = unit.lower()
+        if unit in ["g", "gram", "grams"]:
+            return value / 1000
+        elif unit in ["ml", "milliliter", "milliliters"]:
+            return value / 1000
+        elif unit in ["kg", "kgs", "kilogram", "kilograms"]:
+            return value
+        elif unit in ["l", "liters", "litres", "liter"]:
+            return value
+        elif unit in ["km", "kilometers", "kilometres"]:
+            return value
+        elif unit == "miles":
+            return value * 1.60934
+        return value
+
+    # Replace aliases first to normalize terms
+    for alias, replacement in aliases.items():
+        user_input = re.sub(rf"\b{re.escape(alias)}\b", replacement, user_input)
+
+    # --- TRANSPORT PATTERNS ---
+    transport_factors = flatten_transport_factors()
+    for mode in transport_factors.keys():
         patterns = [
-            rf"{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?)",
-            rf"(\d+(\.\d+)?)\s*(km|kilometers?)\s*(on|in|through|by)?\s*{mode}",
-            rf"(rode|used|took|travelled|drove|drive).*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?)"
+            rf"{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?{mode}",
+            rf"(rode|used|took|travelled|drove|drive|commuted|covered|went by|on a|cycled).*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"distance.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?{mode}",
+            rf"i.*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"{mode}.*?(covered|went|ran|moved|trip|journey|ride|travelled).*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"{mode}.*?(\d+(\.\d+)?)(km|kilometers?|miles).*?(ride|travel)?",
+            rf"{mode}.*?(commuted|traveled|used).*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"drove\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s+in\s+a\s+{mode}",
+            rf"used\s+a\s+{mode}\s+for\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"travelled\s+by\s+{mode}\s+for\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"{mode}.*?distance\s+of\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
         ]
         for pattern in patterns:
             for match in re.finditer(pattern, user_input):
-                num = extract_number(match.groups())
-                transport_data[mode] = transport_data.get(mode, 0) + num
+                groups = match.groups()
+                num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+                unit = next((g for g in groups if g and g.lower() in ["km", "kilometers", "miles"]), None)
+                if num and unit:
+                    km = convert_to_standard(num, unit)
+                    transport_data[mode] = transport_data.get(mode, 0) + km
 
-    for match in re.finditer(r"(electricity|power|consumed|used).*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)", user_input):
-        electricity_kwh += extract_number(match.groups())
-
-    for item in FOOD_FACTORS:
-        matched = False
-        patterns = [
-            rf"{item}.*?(\d+(\.\d+)?)\s*(kg|kgs|liter|litre|liters|l)?",
-            rf"(\d+(\.\d+)?)\s*(kg|kgs|liter|litre|liters|l)?\s*(of\s)?{item}",
-            rf"(ate|had|consumed|ordered|bought).*?(\d+(\.\d+)?)\s*(kg|kgs|liter|litre|liters|l)?\s*{item}"
-        ]
-        for pattern in patterns:
-            for match in re.finditer(pattern, user_input):
-                num = extract_number(match.groups())
-                food_data[item] = food_data.get(item, 0) + num
-                matched = True
-        if matched:
-            continue
-
-    for pattern in [r"spent.*?(\d+)\s*rs.*?(clothes|gadgets|groceries)?", r"(bought|purchased).*?(clothes|gadgets|groceries).*?(\d+)\s*rs"]:
+    # --- ELECTRICITY PATTERNS ---
+    electricity_patterns = [
+        r"(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
+        r"(used|consumed|used up).*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
+        r"electricity.*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
+        r"(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)\s*used",
+        r"used\s+(\d+(\.\d+)?)\s*(units|kwh|kilowatt-hours?)\s*of\s*electricity",
+    ]
+    for pattern in electricity_patterns:
         for match in re.finditer(pattern, user_input):
-            if "spent" in match.group(0):
-                shopping_spend += int(match.group(1))
-                if match.group(2):
-                    shopping_type = match.group(2)
-            else:
-                shopping_type = match.group(2)
-                shopping_spend += int(match.group(3))
-
-    for match in re.finditer(r"(flew|flight|travelled|went).*?(\d+(\.\d+)?)\s*(km|kilometers?).*?(business|economy|domestic|international)?", user_input):
-        flight_km += extract_number(match.groups())
-        for word in match.groups():
-            if word in ["business", "economy", "domestic", "international"]:
-                flight_type = word
-
-    for pattern in [
-        r"(tap|bottled)?\s*water.*?(\d+(\.\d+)?)\s*(liters|litres|liter|litre|l)",
-        r"(drank|used|consumed).*?(\d+(\.\d+)?)\s*(liters|litres|liter|litre|l)\s*(tap|bottled)?\s*water"
-    ]:
-        for match in re.finditer(pattern, user_input):
-            num = extract_number(match.groups())
-            water_liters += num
-            if "bottled" in match.groups():
-                water_type = "bottled"
-            elif "tap" in match.groups():
-                water_type = "tap"
-
-    for pattern in [
-        r"(pet|hdpe|pvc)?\s*plastic.*?(\d+(\.\d+)?)\s*(kg|kgs)?",
-        r"(\d+(\.\d+)?)\s*(kg|kgs)?\s*(of\s)?(pet|hdpe|pvc)?\s*plastic",
-        r"(used|had|bought).*?(\d+(\.\d+)?)\s*(kg|kgs)?\s*(pet|hdpe|pvc)?\s*plastic"
-    ]:
-        for match in re.finditer(pattern, user_input):
-            num = extract_number(match.groups())
+            groups = match.groups()
+            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
             if num:
-                plastic_kg = num
-            for word in match.groups():
-                if word and word.upper() in ["PET", "HDPE", "PVC"]:
-                    plastic_type = word.upper()
+                electricity_kwh += convert_to_standard(num, "kwh")
+
+    # --- FOOD PATTERNS ---
+    for item in FOOD_FACTORS:
+        patterns = [
+            rf"(\d+(\.\d+)?).*?(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters).*?{item}",
+            rf"{item}.*?(\d+(\.\d+)?).*?(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliters)",
+            rf"ate.*?{item}.*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
+            rf"{item}.*?(amount|weighed|measured|totaled).*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
+            rf"consumed.*?(\d+(\.\d+)?).*?(g|kg|l|ml).*?{item}",
+            rf"drank.*?(\d+(\.\d+)?).*?(ml|l|liters?)\s+of\s+{item}",
+            rf"{item}.*?(quantity|amount|weight).*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
+            rf"{item}.*?(had|took|used).*?(\d+(\.\d+)?)\s*(g|kg|l|ml)",
+            rf"{item}.*?(\d+(\.\d+)?)\s*(g|kg|l|ml)",
+            rf"(\d+(\.\d+)?)\s*(g|kg|l|ml)\s*of\s*{item}",
+        ]
+        for pattern in patterns:
+            for match in re.finditer(pattern, user_input):
+                groups = match.groups()
+                num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+                unit = next((g for g in groups if g and g.lower() in ["kg", "kgs", "g", "gram", "grams", "l", "liters", "litres", "ml", "milliliters"]), None)
+                if num and unit:
+                    value = convert_to_standard(num, unit)
+                    food_data[item] = food_data.get(item, 0) + value
+
+    # --- SHOPPING PATTERNS ---
+    shopping_patterns = [
+        r"(\d+)\s*rs.*?(clothes|gadgets|groceries)",
+        r"spent\s*(\d+)\s*rs on (clothes|gadgets|groceries)",
+        r"(clothes|gadgets|groceries).*?purchase.*?(\d+)\s*rs",
+        r"bought\s*(clothes|gadgets|groceries)?\s*for\s*(\d+)\s*rs",
+        r"purchased\s*(clothes|gadgets|groceries)?\s*worth\s*(\d+)\s*rs",
+        r"shopping.*?(\d+)\s*rs",
+    ]
+    for pattern in shopping_patterns:
+        for match in re.finditer(pattern, user_input):
+            groups = match.groups()
+            # Try to find numbers and category in groups
+            for g in groups:
+                if g and g.isdigit():
+                    shopping_spend += int(g)
+                elif g in SHOPPING_FACTORS:
+                    shopping_type = g
+
+    # --- FLIGHT PATTERNS ---
+    flight_patterns = [
+        r"(took|had|used|went on|travelled by)?\s*(a)?\s*(domestic|international|business|economy)?\s*flight.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+        r"flight.*?(domestic|international|business|economy)?.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+        r"flew\s*(domestic|international|business|economy)?\s*(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+        r"(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s*(flight|flight distance|flight km|flown)",
+    ]
+    for pattern in flight_patterns:
+        for match in re.finditer(pattern, user_input):
+            groups = match.groups()
+            ftype = None
+            distance = None
+            unit = None
+            # Extract flight_type & distance/unit
+            for g in groups:
+                if g in ["domestic", "international", "business", "economy"]:
+                    ftype = g
+                elif g and re.match(r"\d+(\.\d+)?", str(g)):
+                    distance = g
+                elif g and g.lower() in ["km", "kilometers", "miles"]:
+                    unit = g
+            if ftype:
+                flight_type = ftype
+            if distance and unit:
+                flight_km += convert_to_standard(distance, unit)
+
+    # --- WATER PATTERNS ---
+    water_patterns = [
+        r"(\d+(\.\d+)?)\s*(liters?|litres?|l|ml).*?water.*?(tap|bottled)?",
+        r"(tap|bottled).*?water.*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
+        r"drank\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*of\s*(tap|bottled)?\s*water",
+        r"used\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*water",
+    ]
+    for pattern in water_patterns:
+        for match in re.finditer(pattern, user_input):
+            groups = match.groups()
+            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", str(g))), None)
+            unit = next((g for g in groups if g and g.lower() in ["liters", "litres", "l", "ml"]), None)
+            wtype = next((g for g in groups if g in ["tap", "bottled"]), None)
+            if wtype:
+                water_type = wtype
+            if num and unit:
+                water_liters += convert_to_standard(num, unit)
+
+    # --- PLASTIC PATTERNS ---
+    plastic_patterns = [
+        r"(\d+(\.\d+)?)\s*(kg|g|gram|grams).*?plastic.*?(pet|hdpe|pvc)?",
+        r"plastic.*?(pet|hdpe|pvc)?.*?(\d+(\.\d+)?)\s*(kg|g|gram|grams)",
+        r"used\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*of\s*(pet|hdpe|pvc)?\s*plastic",
+    ]
+    for pattern in plastic_patterns:
+        for match in re.finditer(pattern, user_input):
+            groups = match.groups()
+            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", str(g))), None)
+            unit = next((g for g in groups if g and g.lower() in ["kg", "g", "gram", "grams"]), None)
+            ptype = next((g for g in groups if g and g.upper() in ["PET", "HDPE", "PVC"]), None)
+            if ptype:
+                plastic_type = ptype.upper()
+            if num and unit:
+                plastic_kg += convert_to_standard(num, unit)
+
+    # Debug prints (optional)
+    print("🚗 Transport Data:", transport_data)
+    print("⚡ Electricity (kWh):", electricity_kwh)
+    print("🥩 Food Data:", food_data)
+    print("🛒 Shopping Spend:", shopping_spend)
+    print("✈️ Flight KM:", flight_km)
+    print("🛫 Flight Type:", flight_type)
+    print("💧 Water (liters):", water_liters)
+    print("🧴 Plastic (kg):", plastic_kg)
+    print("🧴 Plastic Type:", plastic_type)
 
     return calculate_carbon(
         transport_data=transport_data,
@@ -278,6 +416,8 @@ def parse_input_to_data(user_input):
         plastic_kg=plastic_kg,
         plastic_type=plastic_type
     )
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
