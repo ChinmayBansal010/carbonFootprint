@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, send_file
 import re
 import os
 from io import BytesIO
+import math
 
 app = Flask(__name__)
 
@@ -96,6 +97,7 @@ def convert_to_standard(num, unit):
     elif unit in ["miles"]:
         return value * 1.60934
     return value
+
 def is_overlapping(new_span, spans):
     for span in spans:
         if not (new_span[1] <= span[0] or new_span[0] >= span[1]):
@@ -153,7 +155,7 @@ def assign_badges(result):
         badges.append("Plastic Reducer")
 
     if result.get("transport_total", 0) < 10:
-        badges.append("🚶 Eco Commuter")
+        badges.append("Eco Commuter")
 
     if result.get("food_total", 0) < 5:
         badges.append("Green Eater")
@@ -270,7 +272,7 @@ def calculate_carbon(
     result["total_emission"] = round(total, 2)
     result["unknown_inputs"] = unknowns
     
-    trees_required = round(result['total_emission'] / 21, 1)
+    trees_required = math.ceil(result['total_emission'] / 0.7)
     result["trees_required"] = trees_required
     result["tips"] = generate_tips(result)
     result["badges"] = assign_badges(result)
@@ -284,8 +286,8 @@ def extract_number(groups):
     return 0
 
 def parse_input_to_data(user_input):
-    import re
     user_input = user_input.lower()
+    
     transport_data = {}
     food_data = {}
     electricity_kwh = 0
@@ -371,12 +373,13 @@ def parse_input_to_data(user_input):
     # --- FOOD ---
     matched_food_spans = []
     for item in FOOD_FACTORS:
+        item = item.lower()
         patterns = [
-            rf"(\d+(\.\d+)?)\s*(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters)\s+of\s+{item}\b",
-            rf"{item}\s*(amount|weighed|measured|totaled)?\s*(is)?\s*(about)?\s*(\d+(\.\d+)?)\s*(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters)\b",
-            rf"ate\s+about\s+(\d+(\.\d+)?)\s*(kg|g|l|ml)\s+of\s+{item}\b",
-            rf"consumed\s+(\d+(\.\d+)?)\s*(kg|g|l|ml)\s+of\s+{item}\b",
-            rf"drank\s+(\d+(\.\d+)?)\s*(ml|l|liters?)\s+of\s+{item}\b"
+            rf"(\d+(\.\d+)?)\s*(kg|kgs|g|gram|grams|ml|milliliters?|l|liters?|litres?)\s+(of\s+)?{item}\b",
+            rf"{item}\s*(amount|weighed|weighing|measured|totaled)?\s*(is|was)?\s*(about|around)?\s*(\d+(\.\d+)?)\s*(kg|g|grams|ml|l|liters?|litres?)\b",
+            rf"(ate|had|consumed)\s+(about|around)?\s*(\d+(\.\d+)?)\s*(kg|g|grams|ml|l|liters?)\s+(of\s+)?{item}\b",
+            rf"\b{item}\b.*?(about|around)?\s*(\d+(\.\d+)?)\s*(kg|g|ml|l)",
+            rf"{item}\s*[:\-]?\s*(\d+(\.\d+)?)\s*(kg|g|ml|l)"
         ]
         for pattern in patterns:
             for match in re.finditer(pattern, user_input):
@@ -385,7 +388,7 @@ def parse_input_to_data(user_input):
                     continue
                 groups = match.groups()
                 num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
-                unit = next((g for g in groups if g and g.lower() in ["kg", "kgs", "g", "gram", "grams", "l", "liters", "litres", "ml", "milliliters"]), None)
+                unit = next((g for g in groups if g and g.lower() in ["kg", "kgs", "g", "gram", "grams", "ml", "l", "liters", "litres", "milliliters"]), None)
                 if num and unit:
                     value = convert_to_standard(num, unit)
                     food_data[item] = food_data.get(item, 0) + value
