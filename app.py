@@ -1,8 +1,6 @@
 from flask import Flask, request, render_template, send_file
 import re
 import os
-import requests
-import json
 from io import BytesIO
 
 app = Flask(__name__)
@@ -202,20 +200,22 @@ def parse_input_to_data(user_input):
         "scooter": "electric_scooter",
         "bike": "bike",
         "ev": "electric_car",
-        "electric bike": "electric_bike",
         "metro train": "metro",
         "cab": "cab",
         "rickshaw": "auto",
-        "auto rickshaw": "auto",
         "train": "train",
         "aeroplane": "flight",
         "airplane": "flight",
         "cycle": "bicycle",
         "walked": "walk",
         "e-car": "electric_car",
-        "e-bike": "electric_bike",
+        "e-bike": "electric_bike"
     }
 
+    for alias, replacement in aliases.items():
+        user_input = re.sub(rf"\b{re.escape(alias)}\b", replacement, user_input)
+
+    # Helper for unit conversion
     def convert_to_standard(num, unit):
         if num is None:
             return 0
@@ -236,159 +236,190 @@ def parse_input_to_data(user_input):
             return value
         elif unit in ["km", "kilometers", "kilometres"]:
             return value
-        elif unit == "miles":
+        elif unit in ["miles"]:
             return value * 1.60934
         return value
 
-    # Replace aliases first to normalize terms
-    for alias, replacement in aliases.items():
-        user_input = re.sub(rf"\b{re.escape(alias)}\b", replacement, user_input)
+    # Overlap check helper
+    def is_overlapping(new_span, spans):
+        for span in spans:
+            if not (new_span[1] <= span[0] or new_span[0] >= span[1]):
+                return True
+        return False
 
-    # --- TRANSPORT PATTERNS ---
-    transport_factors = flatten_transport_factors()
-    for mode in transport_factors.keys():
+    # --- TRANSPORT ---
+    matched_transport_spans = []
+    all_transport_modes = flatten_transport_factors().keys()
+
+    for mode in all_transport_modes:
         patterns = [
             rf"{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
             rf"(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?{mode}",
-            rf"(rode|used|took|travelled|drove|drive|commuted|covered|went by|on a|cycled).*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"(rode|used|took|travelled|drove|drive|commuted|covered|went by|on a).*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
             rf"distance.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?{mode}",
             rf"i.*?{mode}.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
             rf"{mode}.*?(covered|went|ran|moved|trip|journey|ride|travelled).*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
             rf"{mode}.*?(\d+(\.\d+)?)(km|kilometers?|miles).*?(ride|travel)?",
             rf"{mode}.*?(commuted|traveled|used).*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
             rf"drove\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s+in\s+a\s+{mode}",
-            rf"used\s+a\s+{mode}\s+for\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-            rf"travelled\s+by\s+{mode}\s+for\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-            rf"{mode}.*?distance\s+of\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+            rf"used\s+a\s+{mode}\s+for\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)"
         ]
         for pattern in patterns:
             for match in re.finditer(pattern, user_input):
+                span = match.span()
+                if is_overlapping(span, matched_transport_spans):
+                    continue
                 groups = match.groups()
                 num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
                 unit = next((g for g in groups if g and g.lower() in ["km", "kilometers", "miles"]), None)
                 if num and unit:
                     km = convert_to_standard(num, unit)
                     transport_data[mode] = transport_data.get(mode, 0) + km
+                    matched_transport_spans.append(span)
 
-    # --- ELECTRICITY PATTERNS ---
+    # --- ELECTRICITY ---
+    matched_electricity_spans = []
     electricity_patterns = [
         r"(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
-        r"(used|consumed|used up).*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
+        r"(used|consumed).*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
         r"electricity.*?(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)",
-        r"(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)\s*used",
-        r"used\s+(\d+(\.\d+)?)\s*(units|kwh|kilowatt-hours?)\s*of\s*electricity",
+        r"(\d+(\.\d+)?)\s*(kwh|kilowatt-hours?)\s*used"
     ]
     for pattern in electricity_patterns:
         for match in re.finditer(pattern, user_input):
+            span = match.span()
+            if is_overlapping(span, matched_electricity_spans):
+                continue
             groups = match.groups()
-            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
-            if num:
-                electricity_kwh += convert_to_standard(num, "kwh")
+            for group in groups:
+                if group and re.match(r"\d+(\.\d+)?", group):
+                    electricity_kwh += convert_to_standard(group, "kwh")
+                    matched_electricity_spans.append(span)
+                    break
 
-    # --- FOOD PATTERNS ---
+    # --- FOOD ---
+    matched_food_spans = []
     for item in FOOD_FACTORS:
         patterns = [
-            rf"(\d+(\.\d+)?).*?(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters).*?{item}",
-            rf"{item}.*?(\d+(\.\d+)?).*?(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliters)",
-            rf"ate.*?{item}.*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
-            rf"{item}.*?(amount|weighed|measured|totaled).*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
-            rf"consumed.*?(\d+(\.\d+)?).*?(g|kg|l|ml).*?{item}",
-            rf"drank.*?(\d+(\.\d+)?).*?(ml|l|liters?)\s+of\s+{item}",
-            rf"{item}.*?(quantity|amount|weight).*?(\d+(\.\d+)?).*?(g|kg|l|ml)",
-            rf"{item}.*?(had|took|used).*?(\d+(\.\d+)?)\s*(g|kg|l|ml)",
-            rf"{item}.*?(\d+(\.\d+)?)\s*(g|kg|l|ml)",
-            rf"(\d+(\.\d+)?)\s*(g|kg|l|ml)\s*of\s*{item}",
+            rf"(\d+(\.\d+)?)\s*(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters)\s+of\s+{item}\b",
+            rf"{item}\s*(amount|weighed|measured|totaled)?\s*(is)?\s*(about)?\s*(\d+(\.\d+)?)\s*(kg|kgs|g|gram|grams|l|liters?|litres?|ml|milliliter|milliliters)\b",
+            rf"ate\s+about\s+(\d+(\.\d+)?)\s*(kg|g|l|ml)\s+of\s+{item}\b",
+            rf"consumed\s+(\d+(\.\d+)?)\s*(kg|g|l|ml)\s+of\s+{item}\b",
+            rf"drank\s+(\d+(\.\d+)?)\s*(ml|l|liters?)\s+of\s+{item}\b"
         ]
         for pattern in patterns:
             for match in re.finditer(pattern, user_input):
+                span = match.span()
+                if is_overlapping(span, matched_food_spans):
+                    continue
                 groups = match.groups()
                 num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
                 unit = next((g for g in groups if g and g.lower() in ["kg", "kgs", "g", "gram", "grams", "l", "liters", "litres", "ml", "milliliters"]), None)
                 if num and unit:
                     value = convert_to_standard(num, unit)
                     food_data[item] = food_data.get(item, 0) + value
+                    matched_food_spans.append(span)
 
-    # --- SHOPPING PATTERNS ---
+    # --- SHOPPING ---
+    matched_shopping_spans = []
     shopping_patterns = [
         r"(\d+)\s*rs.*?(clothes|gadgets|groceries)",
         r"spent\s*(\d+)\s*rs on (clothes|gadgets|groceries)",
-        r"(clothes|gadgets|groceries).*?purchase.*?(\d+)\s*rs",
-        r"bought\s*(clothes|gadgets|groceries)?\s*for\s*(\d+)\s*rs",
-        r"purchased\s*(clothes|gadgets|groceries)?\s*worth\s*(\d+)\s*rs",
-        r"shopping.*?(\d+)\s*rs",
+        r"(clothes|gadgets|groceries).*?purchase.*?(\d+)\s*rs"
     ]
     for pattern in shopping_patterns:
         for match in re.finditer(pattern, user_input):
+            span = match.span()
+            if is_overlapping(span, matched_shopping_spans):
+                continue
             groups = match.groups()
-            # Try to find numbers and category in groups
             for g in groups:
                 if g and g.isdigit():
                     shopping_spend += int(g)
                 elif g in SHOPPING_FACTORS:
                     shopping_type = g
+            matched_shopping_spans.append(span)
 
-    # --- FLIGHT PATTERNS ---
+    # --- FLIGHT ---
+    matched_flight_spans = []
     flight_patterns = [
-        r"(took|had|used|went on|travelled by)?\s*(a)?\s*(domestic|international|business|economy)?\s*flight.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-        r"flight.*?(domestic|international|business|economy)?.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-        r"flew\s*(domestic|international|business|economy)?\s*(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
-        r"(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s*(flight|flight distance|flight km|flown)",
+        # Case 1: distance (with unit) followed soon by "flight" or flight type word
+        r"(\d+(\.\d+)?)\s*(km|kilometers?|miles)\s+(domestic|international|business|economy)?\s*flight",
+        
+        # Case 2: "flight" or flight type word followed soon by distance (with unit)
+        r"(domestic|international|business|economy)?\s*flight\s+of\s+(\d+(\.\d+)?)\s*(km|kilometers?|miles)",
+        
+        # Case 3: "flight" followed by distance and optional flight type anywhere after
+        r"flight.*?(\d+(\.\d+)?)\s*(km|kilometers?|miles).*?(domestic|international|business|economy)?"
     ]
     for pattern in flight_patterns:
         for match in re.finditer(pattern, user_input):
+            span = match.span()
+            if is_overlapping(span, matched_flight_spans):
+                continue
             groups = match.groups()
-            ftype = None
-            distance = None
-            unit = None
-            # Extract flight_type & distance/unit
-            for g in groups:
-                if g in ["domestic", "international", "business", "economy"]:
-                    ftype = g
-                elif g and re.match(r"\d+(\.\d+)?", str(g)):
-                    distance = g
-                elif g and g.lower() in ["km", "kilometers", "miles"]:
-                    unit = g
+            print("Flight match groups:", groups)
+            distance = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+            unit = next((g for g in groups if g in ["km", "kilometers", "miles"]), None)
+            ftype = next((g for g in groups if g in ["domestic", "international", "business", "economy"]), None)
             if ftype:
                 flight_type = ftype
             if distance and unit:
                 flight_km += convert_to_standard(distance, unit)
-
-    # --- WATER PATTERNS ---
+                matched_flight_spans.append(span)
+    # --- WATER ---
+    matched_water_spans = []
     water_patterns = [
-        r"(\d+(\.\d+)?)\s*(liters?|litres?|l|ml).*?water.*?(tap|bottled)?",
-        r"(tap|bottled).*?water.*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
-        r"drank\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*of\s*(tap|bottled)?\s*water",
-        r"used\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*water",
+        # Number + unit before water and optional type
+        r"(\d+(\.\d+)?)\s*(liters?|litres?|l|ml).*?(tap|bottled)?\s*water",
+        # Type before water and number + unit after
+        r"(tap|bottled)\s*water.*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
+        # Water followed by type then number + unit
+        r"water\s*(tap|bottled).*?(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)",
+        # drank X liters of bottled water or similar phrasing
+        r"drank\s*(\d+(\.\d+)?)\s*(liters?|litres?|l|ml)\s*of\s*(tap|bottled)?\s*water"
     ]
     for pattern in water_patterns:
+        matched = False
         for match in re.finditer(pattern, user_input):
             groups = match.groups()
-            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", str(g))), None)
+            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
             unit = next((g for g in groups if g and g.lower() in ["liters", "litres", "l", "ml"]), None)
-            wtype = next((g for g in groups if g in ["tap", "bottled"]), None)
+            wtype = next((g for g in groups if g and g.lower() in ["tap", "bottled"]), None)
             if wtype:
-                water_type = wtype
+                water_type = wtype.lower()
             if num and unit:
                 water_liters += convert_to_standard(num, unit)
-
-    # --- PLASTIC PATTERNS ---
+                matched = True
+                break
+        if matched:
+            break
+    # --- PLASTIC ---
     plastic_patterns = [
-        r"(\d+(\.\d+)?)\s*(kg|g|gram|grams).*?plastic.*?(pet|hdpe|pvc)?",
-        r"plastic.*?(pet|hdpe|pvc)?.*?(\d+(\.\d+)?)\s*(kg|g|gram|grams)",
-        r"used\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*of\s*(pet|hdpe|pvc)?\s*plastic",
+        r"used\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*(of\s*)?(pet|hdpe|pvc)?\s*plastic",
+        r"(\d+(\.\d+)?)\s*(kg|g|gram|grams)\s*(of\s*)?(pet|hdpe|pvc)?\s*plastic",
+        r"plastic.*?(pet|hdpe|pvc)?\s*(\d+(\.\d+)?)\s*(kg|g|gram|grams)"
     ]
+
+    matched = False
     for pattern in plastic_patterns:
+        if matched:
+            break
         for match in re.finditer(pattern, user_input):
             groups = match.groups()
-            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", str(g))), None)
+            # extract number
+            num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+            # extract unit
             unit = next((g for g in groups if g and g.lower() in ["kg", "g", "gram", "grams"]), None)
-            ptype = next((g for g in groups if g and g.upper() in ["PET", "HDPE", "PVC"]), None)
+            # extract plastic type
+            ptype = next((g for g in groups if g and g.lower() in ["pet", "hdpe", "pvc"]), None)
             if ptype:
                 plastic_type = ptype.upper()
             if num and unit:
                 plastic_kg += convert_to_standard(num, unit)
+                matched = True
+                break
 
-    # Debug prints (optional)
     print("🚗 Transport Data:", transport_data)
     print("⚡ Electricity (kWh):", electricity_kwh)
     print("🥩 Food Data:", food_data)
