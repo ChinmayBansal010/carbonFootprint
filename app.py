@@ -3,10 +3,16 @@ import re
 import os
 from io import BytesIO
 import math
+import spacy
+from spacy.matcher import PhraseMatcher
+import json
 
 app = Flask(__name__)
 
 # Constants
+
+nlp = spacy.load("en_core_web_sm")
+
 TRANSPORT_FACTORS = {
     "personal": {
         "car": 0.12,
@@ -37,6 +43,12 @@ SHOPPING_FACTORS = {
     "groceries": 1.2
 }
 
+SHOPPING_COST_ESTIMATES = {
+    "clothes": {"rupee_per_kg": 500},
+    "gadgets": {"rupee_per_kg": 3000},
+    "groceries": {"rupee_per_kg": 150}
+}
+
 WATER_FACTORS = {
     "tap": 0.25,
     "bottled": 1.5
@@ -58,14 +70,67 @@ FOOD_FACTORS = {
     "milk": 3.0,
     "paneer": 4.0,
     "cheese": 10.0,
+    "yogurt": 2.2,
+    "curd": 2.2,
+    "butter": 12.0,
+    "ghee": 9.0,
+    "cream": 6.0,
+    
     "rice": 2.5,
+    "basmati": 2.4,
+    "brown rice": 2.2,
     "wheat": 1.3,
+    "flour": 1.2,
+    "maida": 1.4,
+    "bread": 1.8,
+    "chapati": 1.3,
+    "roti": 1.3,
+    "paratha": 2.0,
+    "poha": 1.2,
+    "idli": 1.5,
+    "dosa": 1.7,
+    "upma": 1.6,
+
+    "potato": 0.4,
+    "onion": 0.3,
+    "tomato": 0.4,
+    "carrot": 0.3,
+    "spinach": 0.2,
+    "cabbage": 0.3,
+    "cauliflower": 0.3,
+    "brinjal": 0.4,
+    "okra": 0.4,
+
+    "apple": 0.4,
+    "banana": 0.3,
+    "orange": 0.5,
+    "grapes": 0.6,
+    "mango": 0.7,
+    "pineapple": 0.7,
+    "papaya": 0.5,
+    "pomegranate": 0.6,
+
     "vegetables": 0.5,
     "fruits": 0.4,
     "vegan": 1.2,
     "junk": 7.0,
-    "processed": 8.0
+    "processed": 8.0,
+
+    "chocolate": 19.0,
+    "icecream": 3.5,
+    "coffee": 17.0,
+    "tea": 1.8,
+    "sugar": 1.2,
+    "oil": 6.0,
+    "chips": 5.5,
+    "biscuit": 3.2,
+    "noodles": 4.0,
+    "pizza": 6.0,
+    "burger": 7.5,
+    "soft drink": 3.0,
+    "juice": 2.0
 }
+
 
 # Utility
 def flatten_transport_factors():
@@ -103,6 +168,75 @@ def is_overlapping(new_span, spans):
         if not (new_span[1] <= span[0] or new_span[0] >= span[1]):
             return True
     return False
+
+with open("aliases.json", encoding="utf-8") as f:
+    raw_aliases = json.load(f)
+
+phrase_matchers = {}
+
+for category, mapping in raw_aliases.items():
+    matcher = PhraseMatcher(nlp.vocab, attr="LOWER")
+    for standard, variants in mapping.items():
+        matcher.add(standard, [nlp.make_doc(alias) for alias in variants])
+    phrase_matchers[category] = matcher
+    
+def apply_phrase_matchers(user_input):
+    doc = nlp(user_input)
+    replaced_text = user_input
+
+    for category, matcher in phrase_matchers.items():
+        matches = matcher(doc)
+        for match_id, start, end in matches:
+            span = doc[start:end]
+            label = nlp.vocab.strings[match_id]
+            replaced_text = re.sub(rf"\b{re.escape(span.text)}\b", label, replaced_text, flags=re.IGNORECASE)
+
+    return replaced_text
+
+def detect_shopping_spacy(doc):
+    shopping_keywords = {
+        "clothes": [
+            "shirt", "jeans", "clothes", "dress", "saree", "tshirt", "hoodie", "shoes",
+            "jacket", "kurta", "suit", "trousers", "cap", "shorts"
+        ],
+        "gadgets": [
+            "phone", "mobile", "laptop", "tablet", "camera", "charger", "tv", "watch",
+            "headphones", "airpods", "smartwatch", "monitor", "mouse", "keyboard"
+        ],
+        "groceries": [
+            "rice", "flour", "atta", "dal", "grocery", "groceries", "sugar", "salt",
+            "oil", "bread", "wheat", "vegetables", "milk", "butter", "jam", 
+            "apple", "banana", "soap", "detergent", "toothpaste", "snacks", 
+            "coffee", "tea", "juice", "chocolate", "candy", "cake", "biscuits",
+        ]
+    }
+
+    spend = 0
+    category = None
+
+    for token in doc:
+        for cat, keywords in shopping_keywords.items():
+            if token.lemma_ in keywords:
+                category = cat
+
+        if token.text.lower() in ["rs", "rupees"]:
+            try:
+                prev = token.nbor(-1)
+                if prev.like_num:
+                    spend = float(prev.text)
+            except:
+                pass
+
+    return spend, category
+
+
+def detect_food_spacy(doc):
+    food_data = {}
+    for token in doc:
+        word = token.lemma_.lower()
+        if word in FOOD_FACTORS:
+            food_data[word] = food_data.get(word, 0) + 0.15  # Default to 150g
+    return food_data
 
 
 # Tips and Rewards
@@ -227,8 +361,10 @@ def calculate_carbon(
     total += food_emissions
 
     # Shopping
+    shop_data = SHOPPING_COST_ESTIMATES.get(shopping_type.lower(), {"rupee_per_kg": 100})
     shop_factor = SHOPPING_FACTORS.get(shopping_type.lower(), 1.5)
-    shop_emission = round((shopping_spend / 100) * shop_factor, 2)
+    estimated_kg = shopping_spend / shop_data["rupee_per_kg"]
+    shop_emission = round(estimated_kg * shop_factor, 2)
     result["shopping_spend"] = shop_emission
     total += shop_emission
 
@@ -300,26 +436,19 @@ def parse_input_to_data(user_input):
     plastic_kg = 0
     plastic_type = "PET"
 
-    aliases = {
-        "scooty": "electric_scooter",
-        "scooter": "electric_scooter",
-        "bike": "bike",
-        "ev": "electric_car",
-        "metro train": "metro",
-        "cab": "cab",
-        "rickshaw": "auto",
-        "train": "train",
-        "aeroplane": "flight",
-        "airplane": "flight",
-        "cycle": "bicycle",
-        "walked": "walk",
-        "e-car": "electric_car",
-        "e-bike": "electric_bike"
-    }
+    alias_applied = apply_phrase_matchers(user_input)
 
-    for alias, replacement in aliases.items():
-        user_input = re.sub(rf"\b{re.escape(alias)}\b", replacement, user_input)
+    # Extract matched labels from aliases
+    doc = nlp(alias_applied)
+    matched_items = set()
+    for category, matcher in phrase_matchers.items():
+        matches = matcher(doc)
+        for match_id, start, end in matches:
+            label = nlp.vocab.strings[match_id]
+            matched_items.add(label.lower())
 
+    user_input = alias_applied
+    
     # --- TRANSPORT ---
     matched_transport_spans = []
     all_transport_modes = flatten_transport_factors().keys()
@@ -396,23 +525,53 @@ def parse_input_to_data(user_input):
 
     # --- SHOPPING ---
     matched_shopping_spans = []
-    shopping_patterns = [
-        r"(\d+)\s*rs.*?(clothes|gadgets|groceries)",
-        r"spent\s*(\d+)\s*rs on (clothes|gadgets|groceries)",
-        r"(clothes|gadgets|groceries).*?purchase.*?(\d+)\s*rs"
-    ]
-    for pattern in shopping_patterns:
-        for match in re.finditer(pattern, user_input):
-            span = match.span()
-            if is_overlapping(span, matched_shopping_spans):
-                continue
-            groups = match.groups()
-            for g in groups:
-                if g and g.isdigit():
-                    shopping_spend += int(g)
-                elif g in SHOPPING_FACTORS:
-                    shopping_type = g
-            matched_shopping_spans.append(span)
+
+    for item in SHOPPING_FACTORS.keys():
+        # Rupee-based
+        rupee_patterns = [
+            rf"{item}.*?(for|cost|price|worth|at)?\s*₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?",
+            rf"(bought|purchased|got|ordered).*?{item}.*?(for|cost|price|worth|at)?\s*₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?",
+            rf"spent\s*₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?\s*(on)?\s*{item}",
+            rf"₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?\s*(for|on)?\s*{item}",
+            rf"purchase of\s*{item}.*?(cost|price|was)?\s*₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?",
+            rf"my\s*{item}.*?(cost|price|was)?\s*₹?\s*(\d+(\.\d+)?)\s*(rs|rupees)?",
+        ]
+        for pattern in rupee_patterns:
+            for match in re.finditer(pattern, user_input):
+                span = match.span()
+                if is_overlapping(span, matched_shopping_spans):
+                    continue
+                groups = match.groups()
+                num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+                if num:
+                    shopping_spend += float(num)
+                    shopping_type = item
+                    matched_shopping_spans.append(span)
+
+        # Weight-based
+        weight_patterns = [
+            rf"(bought|purchased|got)?\s*(\d+(\.\d+)?)\s*(kg|kgs|kilograms?)\s+(of\s+)?{item}",
+            rf"{item}.*?(amount|weighed|weighing)?\s*(is|was)?\s*(\d+(\.\d+)?)\s*(kg|kgs|kilograms?)",
+        ]
+        for pattern in weight_patterns:
+            for match in re.finditer(pattern, user_input):
+                span = match.span()
+                if is_overlapping(span, matched_shopping_spans):
+                    continue
+                groups = match.groups()
+                num = next((g for g in groups if g and re.match(r"\d+(\.\d+)?", g)), None)
+                if num:
+                    shopping_spend += float(num) * 100
+                    shopping_type = item
+                    matched_shopping_spans.append(span)
+
+    if shopping_spend == 0:
+        for label in matched_items:
+            for cat in SHOPPING_FACTORS:
+                if label in raw_aliases.get("shopping", {}).get(cat, []):
+                    shopping_type = cat
+                    shopping_spend = 2000  
+                    break
 
     # --- FLIGHT ---
     matched_flight_spans = []
@@ -482,17 +641,32 @@ def parse_input_to_data(user_input):
                 plastic_kg += convert_to_standard(num, unit)
                 matched = True
                 break
-    
+        doc = nlp(user_input)
+
+    # SPA_CY fallback: food
+    if len(food_data) == 0:
+        spacy_food_data = detect_food_spacy(doc)
+        for item, qty in spacy_food_data.items():
+            food_data[item] = food_data.get(item, 0) + qty
+
+    # SPA_CY fallback: shopping
+    if shopping_spend == 0:
+        spacy_spend, spacy_category = detect_shopping_spacy(doc)
+        if spacy_spend > 0:
+            shopping_spend = spacy_spend
+        if spacy_category:
+            shopping_type = spacy_category
+
     #* Debug Print
-    # print("Transport Data:", transport_data)
-    # print("Electricity (kWh):", electricity_kwh)
-    # print("Food Data:", food_data)
-    # print("Shopping Spend:", shopping_spend)
-    # print("Flight KM:", flight_km)
-    # print("Flight Type:", flight_type)
-    # print("Water (liters):", water_liters)
-    # print("Plastic (kg):", plastic_kg)
-    # print("Plastic Type:", plastic_type)
+    print("Transport Data:", transport_data)
+    print("Electricity (kWh):", electricity_kwh)
+    print("Food Data:", food_data)
+    print("Shopping Spend:", shopping_spend)
+    print("Flight KM:", flight_km)
+    print("Flight Type:", flight_type)
+    print("Water (liters):", water_liters)
+    print("Plastic (kg):", plastic_kg)
+    print("Plastic Type:", plastic_type)
 
     return calculate_carbon(
         transport_data=transport_data,

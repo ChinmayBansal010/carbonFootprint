@@ -1,3 +1,4 @@
 Flask
 gunicorn
 matplotlib
+scapy==2.4.3
