@@ -31,3 +31,16 @@ yarn-debug.log
 *.sw?
 .history/*
 *.history/
+venv/*
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+*.whl
+*.manifest
+*.spec
+*.db
