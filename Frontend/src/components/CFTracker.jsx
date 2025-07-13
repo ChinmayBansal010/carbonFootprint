@@ -1,3 +1,5 @@
+// Fix: Prevent duplicate toast notification bug for badges by using a Set and checking before displaying
+
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -6,7 +8,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { supabase } from "../supabaseClient";
 import cf from "../assets/cf.jpg";
 
-// Access Recorder from global (attached via public/index.html script)
 const Recorder = window.Recorder;
 
 const CFTracker = ({ user }) => {
@@ -20,6 +21,7 @@ const CFTracker = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [lastInput, setLastInput] = useState("");
   const [earnedBadges, setEarnedBadges] = useState([]);
+  const [notifiedBadges, setNotifiedBadges] = useState(new Set());
   const [recording, setRecording] = useState(false);
   const recorderRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -32,7 +34,9 @@ const CFTracker = ({ user }) => {
         .select("badge_name")
         .eq("user_id", user.id);
       if (!error && data) {
-        setEarnedBadges(data.map((b) => b.badge_name));
+        const names = data.map((b) => b.badge_name);
+        setEarnedBadges(names);
+        setNotifiedBadges(new Set(names));
       }
     };
     fetchUserBadges();
@@ -51,7 +55,6 @@ const CFTracker = ({ user }) => {
 
   const processUserInput = async (inputText) => {
     if (!inputText.trim()) return;
-
     setLastInput(inputText);
     setChatHistory((prev) => [...prev, { sender: "user", text: inputText }]);
     setLoading(true);
@@ -73,21 +76,29 @@ const CFTracker = ({ user }) => {
           (badge) => !earnedBadges.includes(badge)
         );
 
-        newBadges.forEach((badge) => {
-          toast.success(`🏅 You earned the "${badge}" badge!`, {
-            position: "top-right",
-            autoClose: 4000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
-          if (user) saveBadgeToSupabase(user.id, badge);
-        });
-
         if (newBadges.length > 0) {
-          setEarnedBadges((prev) => [...prev, ...newBadges]);
+          const updatedEarned = [...earnedBadges];
+          const updatedNotified = new Set([...notifiedBadges]);
+
+          newBadges.forEach((badge) => {
+            if (!updatedNotified.has(badge)) {
+              toast.success(`🏅 You earned the "${badge}" badge!`, {
+                position: "top-right",
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+              });
+              updatedNotified.add(badge);
+            }
+            updatedEarned.push(badge);
+            if (user) saveBadgeToSupabase(user.id, badge);
+          });
+
+          setEarnedBadges(updatedEarned);
+          setNotifiedBadges(updatedNotified);
         }
 
         if (
@@ -130,6 +141,7 @@ const CFTracker = ({ user }) => {
       setChatInput("");
     }
   };
+
 
   const startRecording = async () => {
     try {
