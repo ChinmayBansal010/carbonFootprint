@@ -1,12 +1,12 @@
-numpy
-cython
-flask
-flask-cors
-matplotlib
-gunicorn
+numpy==1.21.6
+cython==0.29.36
 spacy==2.3.5
 blis==0.7.4
-cymem==2.0.6
-preshed==3.0.6
 thinc==7.4.6
+preshed==3.0.6
+cymem==2.0.6
+flask
+flask-cors
+gunicorn
+matplotlib
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.1/en_core_web_sm-2.3.1.tar.gz
