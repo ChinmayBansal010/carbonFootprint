@@ -133,32 +133,32 @@ const Dashboard = () => {
 
         // 1. Fetch existing badges
         let currentBadges = [];
-        const { data: badgeData, error: badgeError } = await supabase // Added error variable
+        const { data: badgeData, error: badgeError } = await supabase
           .from("user_badges")
           .select("badge_name")
           .eq("user_id", user.id);
 
-        if (badgeError) { // Check for error during fetching
+        if (badgeError) {
             console.error("Error fetching existing badges:", badgeError);
         } else if (badgeData) {
             currentBadges = badgeData.map((b) => b.badge_name);
-            console.log("Dashboard: Fetched existing badges:", currentBadges); // DEBUGGING: Log fetched badges
+            console.log("Dashboard: Fetched existing badges:", currentBadges);
         }
 
 
         // 2. Check for and award new badges
         let newlyAwardedBadges = await checkAndAwardBadges(user.id, currentBadges);
         if (newlyAwardedBadges.length > 0) {
-            console.log("Dashboard: Newly awarded badges:", newlyAwardedBadges); // DEBUGGING: Log newly awarded badges
+            console.log("Dashboard: Newly awarded badges:", newlyAwardedBadges);
         }
 
         // 3. Combine and set the final list of badges
         setBadges([...currentBadges, ...newlyAwardedBadges]);
-        console.log("Dashboard: Final badges set:", [...currentBadges, ...newlyAwardedBadges]); // DEBUGGING: Log final badges
+        console.log("Dashboard: Final badges set:", [...currentBadges, ...newlyAwardedBadges]);
       }
     };
     fetchUserData();
-  }, [user]); // CRUCIAL: Re-run when user object changes
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -178,8 +178,6 @@ const Dashboard = () => {
       </div>
 
       <div
-        // Changed grid-cols-3 to grid-cols-2 for better centering with two main cards
-        // Added justify-items-center to center the cards within their grid columns
         className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-10 items-stretch justify-items-center"
         style={{ marginTop: `${NAVBAR_HEIGHT + 16}px` }}
       >
@@ -189,7 +187,9 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           whileHover={{ scale: 1.04 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
-          className="bg-[#10141a] border border-[#2af598]/20 text-white rounded-3xl p-5 md:p-8 shadow-2xl flex flex-col items-center hover:shadow-[0_0_32px_0_rgba(42,245,152,0.25)] transition-shadow duration-300 overflow-hidden w-full max-w-md" // Added w-full max-w-md to help with centering and consistent width
+          className="bg-[#10141a] border border-[#2af598]/20 text-white rounded-3xl p-5 md:p-8 shadow-2xl flex flex-col items-center
+                     hover:border-[#2af598] hover:shadow-[0_0_48px_0_rgba(42,245,152,0.4)] transition-[border-color,shadow] duration-300
+                     overflow-hidden w-full max-w-md"
         >
           <div className="relative mb-4">
             <span className="absolute inset-0 rounded-full border-2 md:border-4 border-green-400 animate-pulse"></span>
@@ -273,16 +273,19 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           whileHover={{ scale: 1.04 }}
           transition={{ delay: 0.6, type: "spring", stiffness: 80 }}
-          className="bg-[#10141a] border border-[#2af598]/20 text-white rounded-3xl p-5 md:p-8 shadow-2xl flex flex-col hover:shadow-[0_0_32px_0_rgba(42,245,152,0.25)] transition-shadow duration-300 w-full max-w-md" // Added w-full max-w-md
+          className="bg-[#10141a] border border-[#2af598]/20 text-white rounded-3xl p-5 md:p-8 shadow-2xl flex flex-col
+                     hover:border-[#2af598] hover:shadow-[0_0_48px_0_rgba(42,245,152,0.4)] transition-[border-color,shadow] duration-300
+                     w-full max-w-md"
         >
           <h3 className="text-lg md:text-xl font-bold mb-4 text-[#2af598] tracking-wider text-center">
             🔥 Streak
           </h3>
-          <p className="text-xs md:text-sm text-gray-400 mb-2 text-center">
-            Total active days: {totalDays}
+          {/* Highlighted Streak and Total Days numbers */}
+          <p className="text-sm text-gray-400 mb-2 text-center">
+            Total active days: <span className="text-[#2af598] text-lg font-bold">{totalDays}</span>
           </p>
-          <p className="text-xs md:text-sm text-gray-400 mb-4 text-center">
-            Max streak: {streak} days
+          <p className="text-sm text-gray-400 mb-4 text-center">
+            Max streak: <span className="text-[#2af598] text-lg font-bold">{streak}</span> days
           </p>
           <div className="grid grid-cols-10 gap-0.5 md:gap-1 justify-center">
             {[...Array(30)].map((_, i) => {
