@@ -11,13 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-yarn-error.log
-yarn-debug.log
+
 
 # Editor directories and files
 .vscode/*

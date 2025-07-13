@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { supabase } from "../supabaseClient";
 import cf from "../assets/cf.jpg";
+import.meta.env.VITE_API_URL
 
 // Access Recorder from global (attached via public/index.html script)
 const Recorder = window.Recorder;
@@ -184,10 +185,10 @@ const CFTracker = ({ user }) => {
     if (!lastInput) return;
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/download-report`,
-        { user_input: lastInput },
-        { responseType: "blob", timeout: 5000 }
-      );
+  `${import.meta.env.VITE_API_URL}/api/download-report`,
+  { user_input: lastInput },
+  { responseType: "blob", timeout: 5000 }
+);
 
       const blob = new Blob([res.data], { type: "text/plain" });
       const link = document.createElement("a");

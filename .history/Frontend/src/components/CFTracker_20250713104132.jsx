@@ -5,7 +5,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { supabase } from "../supabaseClient";
 import cf from "../assets/cf.jpg";
-
 // Access Recorder from global (attached via public/index.html script)
 const Recorder = window.Recorder;
 
