@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file
+from flask import Flask, request, render_template, send_file,jsonify
 import re
 import os
 from io import BytesIO
@@ -6,8 +6,12 @@ import math
 import spacy
 from spacy.matcher import PhraseMatcher
 import json
+from flask_cors import CORS
+import speech_recognition as sr
+
 
 app = Flask(__name__)
+CORS(app)
 
 # Constants
 
@@ -169,7 +173,9 @@ def is_overlapping(new_span, spans):
             return True
     return False
 
-with open("aliases.json", encoding="utf-8") as f:
+base_dir = os.path.dirname(__file__)  # gets folder of app.py
+file_path = os.path.join(base_dir, "aliases.json")
+with open(file_path, encoding="utf-8") as f:
     raw_aliases = json.load(f)
 
 phrase_matchers = {}
@@ -681,38 +687,92 @@ def parse_input_to_data(user_input):
         plastic_kg=plastic_kg,
         plastic_type=plastic_type
     )
+@app.route('/api/calculate', methods=['POST'])
+def api_calculate():
+    try:
+        data = request.get_json()
+        if not data or 'user_input' not in data:
+            return jsonify({'error': 'Invalid request format'}), 400
+            
+        result = parse_input_to_data(data['user_input'])
+        
+        # Return the result directly (not nested in 'data' property)
+        return jsonify({
+            'total_emission': result['total_emission'],
+            'category_percentages': result.get('category_percentages', {}),
+            'tips': result.get('tips', []),
+            'badges': result.get('badges', []),  # 👈 ADD THIS
+            'transport_total': result.get('transport_total', 0),
+            'electricity_kwh': result.get('electricity_kwh', 0),
+            'food_total': result.get('food_total', 0),
+            'shopping_spend': result.get('shopping_spend', 0),
+            'water_liters': result.get('water_liters', 0),
+            'plastic_kg': result.get('plastic_kg', 0) 
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
 
+@app.route('/recognize', methods=['POST'])
+def recognize_speech():
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
 
+    audio_file = request.files['audio']
+    file_path = "temp_audio.wav"
+    audio_file.save(file_path)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    result = None
-    user_input = ""
-    if request.method == 'POST':
-        user_input = request.form.get("user_input", "")
-        if user_input.strip():
-            result = parse_input_to_data(user_input)
-    return render_template("index.html", result=result, user_input=user_input)
+    recognizer = sr.Recognizer()
+    try:
+        with sr.AudioFile(file_path) as source:
+            audio = recognizer.record(source)
 
-@app.route('/download-report', methods=['POST'])
-def download_report():
-    user_input = request.form.get("user_input", "")
-    result = parse_input_to_data(user_input)
-    summary = f"""
-        Total Emissions: {result['total_emission']} kg CO₂
-        Breakdown:
-        Transport: {result['transport_total']} kg
-        Electricity: {result['electricity_kwh']} kg
-        Food: {result['food_total']} kg
-        Shopping: {result['shopping_spend']} kg
-        Flight: {result.get('flight_km', 0)} kg
-        Water: {result['water_liters']} kg
-        Plastic: {result['plastic_kg']} kg
-        """
-    buffer = BytesIO()
-    buffer.write(summary.encode())
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="carbon_summary.txt", mimetype='text/plain')
+        text = recognizer.recognize_google(audio)
+        return jsonify({'text': text})
+
+    except sr.UnknownValueError:
+        return jsonify({'error': 'Speech not understood'})
+    except sr.RequestError as e:
+        return jsonify({'error': f'Request failed: {e}'})
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+@app.route('/api/download-report', methods=['POST'])
+def api_download_report():
+    data = request.get_json()
+    user_input = data.get('user_input', '').strip()
+    
+    if not user_input:
+        return jsonify({'error': 'Empty input'}), 400
+    
+    try:
+        result = parse_input_to_data(user_input)
+        summary = f"""Carbon Footprint Report\n\nTotal Emissions: {result['total_emission']} kg CO₂\n\nBreakdown:\n"""
+        summary += f"- Transport: {result['transport_total']} kg\n"
+        summary += f"- Electricity: {result['electricity_kwh']} kg\n"
+        summary += f"- Food: {result['food_total']} kg\n"
+        summary += f"- Shopping: {result['shopping_spend']} kg\n"
+        if result.get('flight_km', 0) > 0:
+            summary += f"- Flight: {result['flight_km']} kg\n"
+        summary += f"- Water: {result['water_liters']} kg\n"
+        summary += f"- Plastic: {result['plastic_kg']} kg\n\n"
+        summary += "Tips:\n" + "\n".join([f"- {tip}" for tip in result.get('tips', [])])
+        
+        buffer = BytesIO() 
+        buffer.write(summary.encode())
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name="carbon_report.txt",
+            mimetype='text/plain'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
