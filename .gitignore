@@ -29,3 +29,5 @@ yarn-debug.log
 *.njsproj
 *.sln
 *.sw?
+.history/*
+*.history/

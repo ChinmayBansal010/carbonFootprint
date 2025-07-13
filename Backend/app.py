@@ -687,6 +687,11 @@ def parse_input_to_data(user_input):
         plastic_kg=plastic_kg,
         plastic_type=plastic_type
     )
+    
+@app.route('/')
+def home():
+    return "Backend is working!"
+
 @app.route('/api/calculate', methods=['POST'])
 def api_calculate():
     try:

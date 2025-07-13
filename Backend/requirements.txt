@@ -1,4 +1,5 @@
-Flask
+flask
+flask-cors
 gunicorn
 matplotlib
 spacy==2.3.5 --prefer-binary
