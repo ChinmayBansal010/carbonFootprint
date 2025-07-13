@@ -1,4 +1,5 @@
 cython
+blis==0.7.4 --prefer-binary
 flask
 flask-cors
 gunicorn
