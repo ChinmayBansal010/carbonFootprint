@@ -5,9 +5,10 @@ import Signup from "./signup.jsx";
 import Login from "./login.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Dashboard from "./dashboard.jsx";
+import Dashboard from "./dashboard.jsx"; //
 import ReactDOM from 'react-dom/client';
 import EDProfile from "./EDProfile.jsx";
+import DebugData from "./DebugData.jsx"; 
 
 
 function App() {
@@ -17,8 +18,11 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Pass a key to force re-render when the path is dashboard. 
+            However, the main fix will be in Dashboard's useEffect dependencies. */}
+        <Route path="/dashboard" element={<Dashboard />} /> 
         <Route path="/edit-profile" element={<EDProfile />} />
+        <Route path="/debug-data" element={<DebugData />} />
       </Routes>
       <ToastContainer
         position="top-right"

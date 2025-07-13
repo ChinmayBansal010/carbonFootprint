@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { supabase } from "../supabaseClient";
+import { ToastContainer, toast } from "react-toastify"; //
+import "react-toastify/dist/ReactToastify.css"; //
+import { supabase } from "../supabaseClient"; //
 import cf from "../assets/cf.jpg";
 
 const Recorder = window.Recorder;
@@ -32,7 +32,7 @@ const CFTracker = ({ user }) => {
       const { data, error } = await supabase
         .from("user_badges")
         .select("badge_name")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id); //
       if (!error && data) {
         const names = data.map((b) => b.badge_name);
         setEarnedBadges(names);
@@ -40,13 +40,13 @@ const CFTracker = ({ user }) => {
       }
     };
     fetchUserBadges();
-  }, [user]);
+  }, [user]); //
 
   const saveBadgeToSupabase = async (userId, badgeName) => {
     try {
       const { error } = await supabase
         .from("user_badges")
-        .insert([{ user_id: userId, badge_name: badgeName }]);
+        .insert([{ user_id: userId, badge_name: badgeName }]); //
       if (error) console.error("Supabase Insert Error:", error.message);
     } catch (err) {
       console.error("Failed to save badge to Supabase", err);
@@ -64,7 +64,7 @@ const CFTracker = ({ user }) => {
         `${import.meta.env.VITE_API_URL}/api/calculate`,
         { user_input: inputText },
         { timeout: 5000 }
-      );
+      ); //
 
       let botReply = "";
       if (res.data && !res.data.error) {
@@ -74,7 +74,7 @@ const CFTracker = ({ user }) => {
 
         const newBadges = (res.data.badges || []).filter(
           (badge) => !earnedBadges.includes(badge)
-        );
+        ); //
 
         if (newBadges.length > 0) {
           const updatedEarned = [...earnedBadges];
@@ -90,11 +90,11 @@ const CFTracker = ({ user }) => {
                 pauseOnHover: true,
                 draggable: true,
                 progress: undefined,
-              });
+              }); //
               updatedNotified.add(badge);
             }
             updatedEarned.push(badge);
-            if (user) saveBadgeToSupabase(user.id, badge);
+            if (user) saveBadgeToSupabase(user.id, badge); //
           });
 
           setEarnedBadges(updatedEarned);
@@ -153,10 +153,10 @@ const CFTracker = ({ user }) => {
       recorderRef.current.record();
 
       setRecording(true);
-      toast.info("🎤 Recording started... Speak now!");
+      toast.info("🎤 Recording started... Speak now!"); //
     } catch (error) {
       console.error("Recorder.js Error:", error);
-      toast.error("Recording failed to start.");
+      toast.error("Recording failed to start."); //
     }
   };
 
@@ -165,7 +165,7 @@ const CFTracker = ({ user }) => {
       recorderRef.current.stop();
       recorderRef.current.exportWAV(async (blob) => {
         setRecording(false);
-        toast.info("🛑 Recording stopped. Processing...");
+        toast.info("🛑 Recording stopped. Processing..."); //
 
         const formData = new FormData();
         formData.append("audio", blob, "speech.wav");
@@ -174,19 +174,19 @@ const CFTracker = ({ user }) => {
           const response = await fetch(`${import.meta.env.VITE_API_URL}/recognize`, {
             method: "POST",
             body: formData,
-          });
+          }); //
 
-          const result = await response.json();
+          const result = await response.json(); //
           if (result.text) {
             setChatInput(result.text);
-            toast.info(`🗣️ You said: "${result.text}"`);
+            toast.info(`🗣️ You said: "${result.text}"`); //
             await processUserInput(result.text);
           } else {
-            toast.error(result.error || "Speech not recognized.");
+            toast.error(result.error || "Speech not recognized."); //
           }
         } catch (error) {
           console.error("Recognition error:", error);
-          toast.error("Failed to recognize audio.");
+          toast.error("Failed to recognize audio."); //
         }
       });
     }
@@ -199,7 +199,7 @@ const CFTracker = ({ user }) => {
         `${import.meta.env.VITE_API_URL}/api/download-report`,
         { user_input: lastInput },
         { responseType: "blob", timeout: 5000 }
-      );
+      ); //
 
       const blob = new Blob([res.data], { type: "text/plain" });
       const link = document.createElement("a");
@@ -207,7 +207,7 @@ const CFTracker = ({ user }) => {
       link.download = "carbon_report.txt";
       link.click();
     } catch (err) {
-      toast.error("Failed to download report. Please try again.");
+      toast.error("Failed to download report. Please try again."); //
       console.error("Download Error:", err);
     }
   };
