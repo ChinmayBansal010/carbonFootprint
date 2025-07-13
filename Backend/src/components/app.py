@@ -693,6 +693,7 @@ def parse_input_to_data(user_input):
     
 @app.route('/')
 def home():
+    print("Home route hit!", file=sys.stderr)
     return "Backend is working!"
 
 @app.route('/api/calculate', methods=['POST'])
