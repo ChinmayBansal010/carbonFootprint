@@ -741,9 +741,9 @@ def recognize_speech():
         return jsonify({'text': text})
 
     except sr.UnknownValueError:
-        return jsonify({'error': 'Speech not understood'})
+        return jsonify({'error': 'Speech not understood'}), 400
     except sr.RequestError as e:
-        return jsonify({'error': f'Request failed: {e}'})
+        return jsonify({'error': f'Request failed: {e}'}), 500
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
     finally:
