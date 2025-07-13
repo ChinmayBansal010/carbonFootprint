@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Header from "./components/Header";
-import CFTracker from "./components/CFtracker";
+import CFTracker from "./components/CFTracker";
 import EImpacts from "./components/EImpacts";
 import About from "./components/About";
 import Footer from "./components/Footer";
