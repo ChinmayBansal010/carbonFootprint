@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file,jsonify
+from flask import Flask, request, send_file,jsonify
 import re
 import os
 from io import BytesIO
@@ -8,6 +8,9 @@ from spacy.matcher import PhraseMatcher
 import json
 from flask_cors import CORS
 import speech_recognition as sr
+
+import sys
+print("Starting app...", file=sys.stderr)
 
 
 app = Flask(__name__)
