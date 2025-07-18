@@ -872,6 +872,7 @@ def api_download_report():
             for badge in result['badges']:
                 p = doc.add_paragraph()
                 run = p.add_run()
+                print(badge)
                 badge_image_path = f"badges/{badge}.png"
                 
                 if os.path.exists(badge_image_path):
@@ -994,7 +995,6 @@ def api_download_tips():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
     
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
