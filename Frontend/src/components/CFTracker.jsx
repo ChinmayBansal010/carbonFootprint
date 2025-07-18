@@ -116,9 +116,9 @@ const CFTracker = ({ user }) => {
               )
               .join("\n");
 
-          if (res.data.tips?.length > 0) {
-            botReply += `\n\n💡 Tips:\n${res.data.tips.join("\n")}`;
-          }
+          // if (res.data.tips?.length > 0) {
+          //   botReply += `\n\n💡 Tips:\n${res.data.tips.join("\n")}`;
+          // }
         }
       } else {
         botReply =
@@ -199,18 +199,44 @@ const CFTracker = ({ user }) => {
         `${import.meta.env.VITE_API_URL}/api/download-report`,
         { user_input: lastInput },
         { responseType: "blob", timeout: 5000 }
-      ); //
+      );
 
-      const blob = new Blob([res.data], { type: "text/plain" });
+      const blob = new Blob([res.data], { 
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+      });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "carbon_report.txt";
+      link.download = "carbon_report.docx";
       link.click();
     } catch (err) {
-      toast.error("Failed to download report. Please try again."); //
+      toast.error("Failed to download report. Please try again.");
       console.error("Download Error:", err);
     }
   };
+
+  const handleDownloadTips = async () => {
+    if (!lastInput) return;
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/download-tips`,
+        { user_input: lastInput },
+        { responseType: "blob", timeout: 5000 }
+      );
+
+      const blob = new Blob([res.data], { 
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "carbon_tips.docx";
+      link.click();
+    } catch (err) {
+      toast.error("Failed to download tips. Please try again.");
+      console.error("Download Tips Error:", err);
+    }
+  };
+
+
 
   return (
     <motion.div
@@ -264,12 +290,18 @@ const CFTracker = ({ user }) => {
                   idx === chatHistory.length - 1 &&
                   !loading &&
                   lastInput && (
-                    <div className="flex justify-start mt-2 ml-2">
+                    <div className="flex justify-start gap-2 mt-2 ml-2">
                       <button
                         onClick={handleDownloadReport}
                         className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-2 rounded-full shadow-md hover:scale-105 transition"
                       >
-                        📄 Download My Report
+                        📄 Download Report
+                      </button>
+                      <button
+                        onClick={handleDownloadTips}
+                        className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-6 py-2 rounded-full shadow-md hover:scale-105 transition"
+                      >
+                        💡Tips to Improve
                       </button>
                     </div>
                   )}

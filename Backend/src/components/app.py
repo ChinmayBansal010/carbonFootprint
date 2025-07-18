@@ -360,12 +360,12 @@ def generate_tips(result):
         ])
     elif total < 200:
         tips.extend([
-            "Great job! Your carbon footprint is impressively low — you're on a sustainable path.",
+            "Great job! Your total carbon footprint is impressively low — you're on a sustainable path.",
             "Keep up your eco-friendly choices and inspire others by sharing your habits.",
             "Try offsetting what little CO₂ you emit via verified carbon offset platforms.",
         ])
     elif total < 100:
-        tips.append("Excellent! You're living one of the lowest-impact lifestyles. You could mentor others on how to reduce theirs!")
+        tips.append("Excellent! You're living one of the lowest-impact lifestyles according to your total carbon footprint. You could mentor others on how to reduce theirs!")
 
     return tips
 
@@ -862,6 +862,53 @@ def api_download_report():
             doc.add_paragraph(f"• Flight: {result['flight_km']} kg CO₂")
         doc.add_paragraph(f"• Water: {result['water_liters']} liters")
         doc.add_paragraph(f"• Plastic: {result['plastic_kg']} kg")
+        
+        doc.add_paragraph().add_run("🌳 Trees Required to Offset: ").bold = True
+        doc.add_paragraph(f"{result['trees_required']} trees")
+        
+        doc.add_paragraph().add_run("🏅 Badges Earned: ").bold = True
+        
+        if result.get('badges'):
+            for badge in result['badges']:
+                p = doc.add_paragraph()
+                run = p.add_run()
+                badge_image_path = f"badges/{badge}.png"
+                
+                if os.path.exists(badge_image_path):
+                    run.add_picture(badge_image_path, width=Inches(0.4)) 
+                    run.add_text(f"  {badge}") 
+                else:
+                    p.add_run(f"• {badge}") 
+        else:
+            doc.add_paragraph("• No badges earned yet!", style='List Bullet')
+        
+        global_avg_annual_kg = 4.8 * 1000
+        global_avg_daily_kg = global_avg_annual_kg / 365
+        total_emission_daily = result['total_emission'] 
+        doc.add_paragraph().add_run("🌍 Global Average Comparison: ").bold = True   
+        
+        
+        if total_emission_daily > global_avg_daily_kg:
+            excess = total_emission_daily - global_avg_daily_kg
+            percent = (excess / global_avg_daily_kg) * 100
+            doc.add_paragraph(
+                f"Your daily carbon footprint is {total_emission_daily:.2f} kg CO₂, "
+                f"which is about {percent:.1f}% higher than the global average daily footprint "
+                f"of 13.15 kg CO₂ (4.8 tons per year)."
+            )
+        elif total_emission_daily < global_avg_daily_kg:
+            less = global_avg_daily_kg - total_emission_daily
+            percent = (less / global_avg_daily_kg) * 100
+            doc.add_paragraph(
+                f"Great job! Your daily carbon footprint is {total_emission_daily:.2f} kg CO₂, "
+                f"which is about {percent:.1f}% lower than the global average daily footprint "
+                f"of 13.15 kg CO₂ (4.8 tons per year)."
+            )
+        else:
+            doc.add_paragraph(
+                f"Your daily carbon footprint matches the global average daily footprint "
+                f"of 13.15 kg CO₂ (4.8 tons per year)."
+            )
 
         # --- Create Pie Chart ---
         labels = ['Transport', 'Electricity', 'Food', 'Shopping', 'Plastic', 'Flight']
