@@ -8,6 +8,9 @@ from spacy.matcher import PhraseMatcher
 import json
 from flask_cors import CORS
 import speech_recognition as sr
+from docx import Document
+from docx.shared import Inches, Pt
+import matplotlib.pyplot as plt
 
 import sys
 print("Starting app...", file=sys.stderr)
@@ -253,35 +256,116 @@ def generate_tips(result):
     tips = []
 
     transport = result.get("transport_total", 0)
-    if transport > 50:
-        tips.append(f"Your transport emissions are quite high ({transport} kg CO₂). Try switching to public transport, biking, or walking more often.")
+    if transport > 100:
+        tips.extend([
+            f"Your transport emissions are very high ({transport} kg CO₂). Try limiting long-distance travel or combining errands to reduce trips.",
+            "Switch to an electric or hybrid vehicle if possible.",
+            "Use apps for ride-sharing or carpooling to reduce solo trips.",
+            "Consider working remotely if your job allows to reduce commuting."
+        ])
+    elif transport > 50:
+        tips.extend([
+            f"Your transport emissions are quite high ({transport} kg CO₂). Use public transport more often.",
+            "Try biking or walking for short distances.",
+            "Plan your week to reduce unnecessary trips.",
+        ])
 
     food = result.get("food_total", 0)
-    if food > 30:
-        tips.append(f"Your food-related emissions are {food} kg CO₂. Consider reducing red meat and processed foods, and try more plant-based meals.")
+    if food > 70:
+        tips.extend([
+            f"Your food emissions are high ({food} kg CO₂). Reduce consumption of red meat and dairy.",
+            "Buy local and seasonal produce to reduce transport-related emissions.",
+            "Avoid food waste — freeze leftovers or plan meals in advance.",
+            "Explore vegetarian or vegan recipes once or twice a week."
+        ])
+    elif food > 30:
+        tips.extend([
+            f"Your food-related emissions are {food} kg CO₂. Include more plant-based meals in your diet.",
+            "Cut back on processed and packaged foods.",
+            "Reduce portion sizes and compost food waste where possible.",
+        ])
 
     plastic = result.get("plastic_kg", 0)
-    if plastic > 2:
-        tips.append(f"You used {plastic} kg of plastic. Try shifting to reusable or biodegradable alternatives to cut down plastic impact.")
+    if plastic > 5:
+        tips.extend([
+            f"You used {plastic} kg of plastic. Switch to glass, metal, or cloth alternatives.",
+            "Carry a reusable bag, bottle, and straw when going out.",
+            "Avoid products with excessive packaging.",
+            "Buy in bulk to reduce plastic waste from packaging."
+        ])
+    elif plastic > 2:
+        tips.extend([
+            f"You used {plastic} kg of plastic. Try using shampoo bars and refillable containers.",
+            "Opt for biodegradable packaging whenever possible.",
+            "Participate in local plastic recycling or cleanup programs.",
+        ])
 
     electricity = result.get("electricity_kwh", 0)
-    if electricity > 20:
-        tips.append(f"You consumed {electricity} kWh of electricity. Reduce usage by unplugging unused devices and using energy-efficient appliances.")
+    if electricity > 50:
+        tips.extend([
+            f"You consumed {electricity} kWh of electricity. Switch to LED lights and unplug electronics when not in use.",
+            "Use a programmable thermostat to optimize cooling/heating.",
+            "Consider installing solar panels if you have the option.",
+            "Wash clothes in cold water and air-dry them when possible."
+        ])
+    elif electricity > 20:
+        tips.extend([
+            f"Your electricity usage is {electricity} kWh. Reduce screen time and power-hungry devices.",
+            "Turn off appliances at the socket instead of leaving them on standby.",
+            "Use smart plugs to schedule or monitor appliance use.",
+        ])
 
     shopping = result.get("shopping_spend", 0)
-    if shopping > 10:
-        tips.append(f"Your shopping emissions are {shopping} kg CO₂. Consider buying only what you need and supporting eco-friendly brands.")
+    if shopping > 50:
+        tips.extend([
+            f"Your shopping emissions are {shopping} kg CO₂. Avoid fast fashion; buy durable, timeless pieces.",
+            "Support local businesses and eco-conscious brands.",
+            "Think twice before buying: do I really need this?",
+            "Repair and reuse items before replacing them."
+        ])
+    elif shopping > 10:
+        tips.extend([
+            f"Shopping contributed {shopping} kg CO₂. Try thrift stores and second-hand platforms.",
+            "Limit impulse buys and unsubscribe from promotional emails.",
+            "Choose digital or paperless alternatives where possible."
+        ])
 
     water = result.get("water_liters", 0)
-    if water > 100:
-        tips.append(f"You used {water} liters of water. Try shorter showers, fixing leaks, and using water-efficient fixtures.")
+    if water > 200:
+        tips.extend([
+            f"You used {water} liters of water. Install low-flow showerheads and dual-flush toilets.",
+            "Collect rainwater for gardening and cleaning.",
+            "Run dishwashers and washing machines only with full loads.",
+            "Avoid washing vehicles frequently or use waterless products."
+        ])
+    elif water > 100:
+        tips.extend([
+            f"Water consumption at {water} liters — shorten shower time to under 5 minutes.",
+            "Turn off taps while brushing or shaving.",
+            "Fix leaks promptly — even slow drips waste liters daily.",
+        ])
 
     total = result.get("total_emission", 0)
-    if total > 1000:
-        tips.append(f"Your total footprint is {total} kg CO₂. Setting monthly sustainability goals can help you bring this down over time.")
-
-    if total < 200:
-        tips.append("Great job! Your footprint is impressively low. Keep up the eco-friendly habits!")
+    if total > 2000:
+        tips.extend([
+            f"Your total footprint is very high ({total} kg CO₂). A deep audit of your lifestyle could help — track and measure monthly emissions.",
+            "Set goals to reduce 10% each month through small changes in every area.",
+            "Get involved in community greening efforts or tree planting.",
+        ])
+    elif total > 1000:
+        tips.extend([
+            f"Total emissions of {total} kg CO₂ can be improved by tackling 2–3 habits at a time.",
+            "Set personal sustainability challenges (like a no-buy month or plastic-free week).",
+            "Educate others around you — collective change amplifies impact.",
+        ])
+    elif total < 200:
+        tips.extend([
+            "Great job! Your carbon footprint is impressively low — you're on a sustainable path.",
+            "Keep up your eco-friendly choices and inspire others by sharing your habits.",
+            "Try offsetting what little CO₂ you emit via verified carbon offset platforms.",
+        ])
+    elif total < 100:
+        tips.append("Excellent! You're living one of the lowest-impact lifestyles. You could mentor others on how to reduce theirs!")
 
     return tips
 
@@ -757,31 +841,113 @@ def api_download_report():
     
     if not user_input:
         return jsonify({'error': 'Empty input'}), 400
+
+    try:
+        result = parse_input_to_data(user_input)
+
+        # --- Create Word Document ---
+        doc = Document()
+        doc.add_heading('🌱 Carbon Footprint Report', 0)
+
+        # Summary
+        doc.add_paragraph().add_run("Total Emissions: ").bold = True
+        doc.add_paragraph(f"{result['total_emission']} kg CO₂", style='Intense Quote')
+
+        doc.add_paragraph().add_run("📊 Emission Breakdown:").bold = True
+        doc.add_paragraph(f"• Transport: {result['transport_total']} kg CO₂")
+        doc.add_paragraph(f"• Electricity: {result['electricity_kwh']} kg CO₂")
+        doc.add_paragraph(f"• Food: {result['food_total']} kg CO₂")
+        doc.add_paragraph(f"• Shopping: {result['shopping_spend']} kg CO₂")
+        if result.get('flight_km', 0) > 0:
+            doc.add_paragraph(f"• Flight: {result['flight_km']} kg CO₂")
+        doc.add_paragraph(f"• Water: {result['water_liters']} liters")
+        doc.add_paragraph(f"• Plastic: {result['plastic_kg']} kg")
+
+        # --- Create Pie Chart ---
+        labels = ['Transport', 'Electricity', 'Food', 'Shopping', 'Plastic', 'Flight']
+        values = [
+            result.get('transport_total', 0),
+            result.get('electricity_kwh', 0),
+            result.get('food_total', 0),
+            result.get('shopping_spend', 0),
+            result.get('plastic_kg', 0),
+            result.get('flight_km', 0)
+        ]
+        # Remove zero values to keep chart clean
+        chart_data = [(l, v) for l, v in zip(labels, values) if v > 0]
+        chart_labels, chart_values = zip(*chart_data)
+
+        # Generate pie chart
+        fig, ax = plt.subplots()
+        ax.pie(chart_values, labels=chart_labels, autopct='%1.1f%%', startangle=140)
+        ax.axis('equal')
+        chart_buf = BytesIO()
+        plt.savefig(chart_buf, format='png')
+        plt.close(fig)
+        chart_buf.seek(0)
+
+        # Insert chart into Word doc
+        doc.add_page_break()
+        doc.add_heading('📈 Visual Breakdown', level=1)
+        doc.add_picture(chart_buf, width=Inches(5.5))
+
+        # Save the document to a buffer
+        doc_buffer = BytesIO()
+        doc.save(doc_buffer)
+        doc_buffer.seek(0)
+
+        return send_file(
+            doc_buffer,
+            as_attachment=True,
+            download_name="carbon_report.docx",
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/download-tips', methods=['POST'])
+def api_download_tips():
+    data = request.get_json()
+    user_input = data.get('user_input', '').strip()
+    
+    if not user_input:
+        return jsonify({'error': 'Empty input'}), 400
     
     try:
         result = parse_input_to_data(user_input)
-        summary = f"""Carbon Footprint Report\n\nTotal Emissions: {result['total_emission']} kg CO₂\n\nBreakdown:\n"""
-        summary += f"- Transport: {result['transport_total']} kg\n"
-        summary += f"- Electricity: {result['electricity_kwh']} kg\n"
-        summary += f"- Food: {result['food_total']} kg\n"
-        summary += f"- Shopping: {result['shopping_spend']} kg\n"
-        if result.get('flight_km', 0) > 0:
-            summary += f"- Flight: {result['flight_km']} kg\n"
-        summary += f"- Water: {result['water_liters']} kg\n"
-        summary += f"- Plastic: {result['plastic_kg']} kg\n\n"
-        summary += "Tips:\n" + "\n".join([f"- {tip}" for tip in result.get('tips', [])])
+        tips = generate_tips(result)
         
-        buffer = BytesIO() 
-        buffer.write(summary.encode())
+        if not tips:
+            return jsonify({'error': 'No tips available for the provided input'}), 404
+
+        # Create Word document
+        doc = Document()
+        doc.add_heading('🌿 Personalized Carbon Reduction Tips', 0)
+
+        intro = doc.add_paragraph()
+        intro.add_run("Based on your input, here are some sustainability tips to reduce your carbon footprint:\n").italic = True
+
+        for tip in tips:
+            doc.add_paragraph(tip, style='List Bullet')
+
+        doc.add_paragraph("\n💡 Small steps can lead to big impact. Stay green!", style='Intense Quote')
+
+        # Save document to in-memory buffer
+        buffer = BytesIO()
+        doc.save(buffer)
         buffer.seek(0)
+
         return send_file(
             buffer,
             as_attachment=True,
-            download_name="carbon_report.txt",
-            mimetype='text/plain'
+            download_name="carbon_tips.docx",
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
+    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+    
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

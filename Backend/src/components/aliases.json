@@ -1,164 +1,398 @@
 {
     "transport": {
         "car": [
-        "car", "personal car", "my car", "our car", "family car", "rented car", "hired car",
-        "drive car", "driving car", "drove car", "driven car", "car ride", "car journey",
-        "car trip", "road trip", "highway drive", "city drive", "short drive", "long drive",
-        "petrol car", "diesel car", "cng car", "gas car", "petrol hatchback", "diesel sedan",
-        "electric hatchback", "suv drive", "compact suv", "luxury car", "budget car",
-        "4-wheeler", "four wheeler", "sedan", "hatchback", "mux", "mpv", "uv suv",
-        "maruti", "maruti swift", "innova", "innova crysta", "honda city", "swift dzire",
-        "baleno", "altroz", "wagonr", "santro", "i10", "verna", "ciaz", "duster",
-        "creta", "fortuner", "scorpio", "xuv", "toyota camry", "kia seltos",
-        "tata nexon", "mahindra xuv", "kia sonet", "ford ecosport", "chevrolet aveo",
-        "volkswagen polo", "skoda rapid", "bmw car", "audi car", "mercedes car",
-        "carpool", "car-sharing", "lift car", "office commute by car", "daily car commute"
+            "car", "my car", "our car", "family car", "rented car", "hired car", "borrowed car",
+            "own car", "personal car", "self-owned car", "used car", "new car", "leased car",
+            "drive car", "driving car", "drove car", "driven car", "take the car", "took the car",
+            "commute by car", "ride in a car", "go by car", "travel by car",
+            "car ride", "car journey", "car trip", "road trip", "highway drive", "city drive",
+            "short drive", "long drive", "local drive", "outstation drive", "office commute by car",
+            "daily car commute", "car travel", "car usage", "vehicle travel",
+            "petrol car", "diesel car", "cng car", "gas car", "lpg car", "electric car", "hybrid car",
+            "hatchback", "sedan", "suv", "compact suv", "luxury car", "budget car", "minivan",
+            "mpv", "muv", "crossover", "convertible", "coupe", "wagon", "4-wheeler", "four wheeler",
+            "maruti", "maruti car", "maruti swift", "swift dzire", "baleno", "alto", "wagonr",
+            "ertiga", "celerio", "ignis", "s-presso", "santro", "i10", "i20", "venue", "verna", "creta",
+            "ciaz", "duster", "kwid", "triber", "kiger", "magnite", "nexon", "altroz", "tiago",
+            "tigor", "harrier", "safari", "xuv300", "xuv500", "xuv700", "scorpio", "bolero",
+            "thar", "fortuner", "innova", "innova crysta", "camry", "corolla", "ciaz", "city",
+            "honda city", "amaze", "brio", "jazz", "kia seltos", "kia sonet", "audi car", "bmw car",
+            "mercedes car", "volkswagen polo", "vento", "skoda rapid", "skoda slavia", "ford ecosport",
+            "figo", "aspire", "chevrolet beat", "chevrolet aveo",
+            "carpool", "car pool", "car-sharing", "car sharing", "shared car", "lift in car",
+            "ride with friend", "office cab", "cab ride", "uber", "ola", "ola cab", "uber cab",
+            "self drive", "zoomcar", "drivezy", "revv", "turo", "rental car", "hired driver",
+            "mom’s car", "dad’s car", "brother’s car", "friend’s car", "neighbour's car",
+            "company car", "corporate car", "driver-driven car", "chauffeur car", "taxi ride",
+            "four-door car", "five-seater", "seven-seater", "long route by car", "trip by car",
+            "luxury sedan", "eco car", "zero-emission car", "fuel-guzzling car"
         ],
         "bike": [
-        "bike", "motorbike", "motorcycle", "two wheeler", "bike ride", "rode bike",
-        "riding bike", "bike commute", "bike journey", "bike trip", "daily bike",
-        "sports bike", "cruiser bike", "mountain bike", "city bike", "gear bike",
-        "scooty", "activa", "pulsar", "suzuki bike", "yamaha bike", "bullet", "ninja",
-        "ktm", "duke", "royal enfield", "harley", "cafe racer", "bike drive", 
-        "bike on road", "commuting by bike", "office commute bike", "college commute bike",
-        "motorbike ride", "motorcycle trip", "bike weekend ride", "bike mountain trip",
-        "bike highway ride", "bike tour", "bike picnic trip", "bike sightseeing"
+            "bike", "biking", "ride bike", "bike ride", "bike trip", "bike travel", "bike journey",
+            "rode bike", "riding bike", "bike drive", "bike usage", "bike on road", "bike commute",
+            "commute by bike", "daily bike", "office commute bike", "college commute bike",
+            "motorbike", "motorbike ride", "motorbike commute", "motorcycle", "motorcycle trip",
+            "two wheeler", "two-wheeler", "two-wheeled vehicle",
+            "sports bike", "gear bike", "racing bike", "touring bike", "cruiser bike", "mountain bike",
+            "offroad bike", "city bike", "road bike", "scooty", "scooter", "electric scooter",
+            "e-bike", "e-scooter", "automatic scooter", "manual bike",
+            "activa", "jupiter", "maestro", "pleasure", "access", "burgman", "ray z", "ntorq",
+            "fascino", "dio", "aviator", "xoom", "chetak", "suzuki bike", "yamaha bike",
+            "hero bike", "splendor", "passion", "glamour", "hf deluxe", "xtreme", "karizma",
+            "pulsar", "discover", "ns200", "rs200", "dominar", "platina", "avenger", "ninja",
+            "ktm", "duke", "rc 200", "rc 390", "ktm adventure", "royal enfield", "classic 350",
+            "bullet", "himalayan", "meteor", "scram", "interceptor", "continental gt",
+            "harley", "harley davidson", "iron 883", "street 750", "street rod", "cafe racer",
+            "bajaj bike", "tvs bike", "honda bike", "honda unicorn", "hornet", "cb350",
+            "commuting by bike", "bike weekend ride", "bike highway ride", "bike picnic trip",
+            "bike long ride", "bike night ride", "bike solo ride", "bike double seat",
+            "bike couple ride", "bike sightseeing", "bike mountain trip", "bike vacation ride",
+            "friend’s bike", "dad’s bike", "borrowed bike", "rented bike", "shared bike",
+            "company bike", "fleet bike", "bike tour", "bike rental", "bike share"
         ],
         "electric_car": [
-        "electric car", "ev", "e car", "ev car", "electric vehicle", "electric sedan",
-        "battery car", "battery powered car", "electric suv", "tesla", "tesla model 3",
-        "tesla model s", "tesla model x", "tesla model y", "nexon ev", "tiago ev",
-        "kona electric", "mg zs ev", "mahindra ev", "mahindra e-verito", "tata ev",
-        "zero emission car", "eco car", "green car", "plug in ev", "phev", "plug-in car",
-        "electric hatchback", "electric hatchback ride", "daily ev commute",
-        "ev road trip", "ev highway drive", "ev city drive", "electric taxi",
-        "electric suv ride", "electric innova", "electric innova ride", "electric compact"
+            "electric car", "ev", "e car", "ev car", "electric vehicle", "electric sedan",
+            "battery car", "battery powered car", "electric suv", "tesla", "tesla model 3",
+            "tesla model s", "tesla model x", "tesla model y", "nexon ev", "tiago ev",
+            "kona electric", "mg zs ev", "mahindra ev", "mahindra e-verito", "tata ev",
+            "zero emission car", "eco car", "green car", "plug in ev", "phev", "plug-in car",
+            "electric hatchback", "electric hatchback ride", "daily ev commute",
+            "ev road trip", "ev highway drive", "ev city drive", "electric taxi",
+            "electric suv ride", "electric innova", "electric innova ride", "electric compact",
+            "leaf nissan", "bmw i3", "chevy bolt", "audi e-tron", "jaguar i-pace", "porsche taycan",
+            "hyundai kona ev", "volkswagen id.4", "rivian r1t", "lucid air", "ford mustang mach-e",
+            "volvo xc40 recharge", "bmw ix", "mercedes eqc", "mini electric", "fiat 500 electric",
+            "renault zoe", "nissan leaf", "tesla cybertruck", "tesla roadster", "tesla model y",
+            "audi q4 etron", "porsche macan electric", "chevrolet bolt ev", "hyundai ioniq electric",
+            "kia soul ev", "lucid air dream edition", "bmw i4", "mercedes benz eqs", "tesla semi"
         ],
+
         "electric_scooter": [
-        "electric scooter", "e scooter", "electric scooty", "e scooty", "battery scooter",
-        "electric two wheeler", "e bike", "battery bike", "electric moped", "ola scooter",
-        "ather", "bounce scooter", "okaya scooter", "hero electric", "revolt rv400",
-        "lectric scooter", "electric ride", "scooter trip", "commute by scooter",
-        "daily scooter ride", "scooty ride", "battery scooty", "electric city ride",
-        "eco scooter", "green scooter", "e-scooter trip", "e-scooty commute",
-        "electric delivery scooter"
+            "electric scooter", "e scooter", "electric scooty", "e scooty", "battery scooter",
+            "electric two wheeler", "e bike", "battery bike", "electric moped", "ola scooter",
+            "ather", "bounce scooter", "okaya scooter", "hero electric", "revolt rv400",
+            "lectric scooter", "electric ride", "scooter trip", "commute by scooter",
+            "daily scooter ride", "scooty ride", "battery scooty", "electric city ride",
+            "eco scooter", "green scooter", "e-scooter trip", "e-scooty commute",
+            "electric delivery scooter", "segway ninebot", "xiaomi m365", "gogoro", "unagi",
+            "super soco", "ninebot max", "razor e300", "segway es4", "xiaomi pro 2",
+            "emove cruiser", "inokim ox", "boosted rev", "dualtron thunder", "kaabo mantis",
+            "zero 10x", "dualtron storm", "apollo phantom", "segway es2", "ninebot es1",
+            "gotrax gxl", "razor e100", "razor power core e90", "segway ninebot max g30",
+            "xiaomi m365 pro", "emove cruiser plus", "unagi model one", "unagi model two",
+            "go-ped", "glion dolce", "boosted mini x", "etwow booster", "gotrax xr ultra"
         ],
         "bicycle": [
-        "bicycle", "cycle", "pedal bike", "manual cycle", "city bike", "mountain bike",
-        "hybrid bicycle", "road bicycle", "folding bicycle", "bicycle ride",
-        "cycle ride", "cycled to office", "cycle commute", "daily cycle commute",
-        "morning cycle", "evening cycle", "cycling trip", "cycle picnic",
-        "riding bicycle", "cycle journey", "college cycle ride", "gym cycle commute",
-        "cycle sightseeing", "cycle weekend trip", "bicycle tour", "bicycle exercise",
-        "bicycle for fitness"
+            "bicycle", "bike", "cycle", "pedal bike", "manual cycle", "city bike", "mountain bike",
+            "hybrid bicycle", "road bicycle", "folding bicycle", "bicycle ride", "cycle ride",
+            "cycled to office", "cycle commute", "daily cycle commute", "morning cycle",
+            "evening cycle", "cycling trip", "cycle picnic", "riding bicycle", "cycle journey",
+            "college cycle ride", "gym cycle commute", "cycle sightseeing", "cycle weekend trip",
+            "bicycle tour", "bicycle exercise", "bicycle for fitness", "commute by bicycle",
+            "bicycle travel", "bicycle race", "bicycle workout", "bicycle training",
+            "mountain biking", "road biking", "trail bike", "cross bike", "cyclocross bike",
+            "fixed gear bike", "single speed bike", "cruiser bike", "beach cruiser",
+            "touring bike", "bmx bike", "kids bicycle", "child's bicycle", "women's bike",
+            "men's bike", "electric bicycle", "ebike", "e-bike", "electric pedal bike",
+            "foldable bike", "commuter bike", "fitness bike", "triathlon bike",
+            "time trial bike", "bicycle rental", "bike share", "bike hire", "shared bicycle",
+            "bike lane ride", "bicycle path", "bicycle trail", "bike park", "bike tour group",
+            "mountain bike trail", "bicycle race event", "bicycle marathon", "bicycle race day",
+            "cycling club ride", "bike messenger", "bike courier", "bike delivery",
+            "bike repair", "bike maintenance", "bicycle shop", "bike store", "bike fitting",
+            "bicycle helmet", "bike lock", "bicycle accessories", "bike pump",
+            "bicycle basket", "bike lights", "bike bell", "bicycle chain", "bike tire",
+            "bike pedal", "bike seat", "bicycle saddle", "cycling gear", "bike gloves",
+            "bike jersey", "cycling shorts", "bicycle shoes", "bike computer", "bike GPS",
+            "bicycle speedometer", "bike cadence sensor", "bicycle trainer", "indoor cycling",
+            "stationary bike", "spin bike", "cycling workout", "bike spinning class",
+            "bike race training", "bike endurance ride", "bicycle commute time",
+            "bicycle to work", "bike to school", "bicycle courier service", "bike messenger job",
+            "bicycle festival", "bike race event", "bike race weekend", "charity bike ride",
+            "bike rally", "cycling fundraiser", "bicycle advocacy", "bike lane campaign",
+            "bike safety", "bicycle traffic laws", "bike helmet law", "bike share program",
+            "bike rental shop", "bike tour company", "bike travel tour", "bicycle vacation",
+            "bicycle holiday", "bike sightseeing tour", "bicycle photo tour"
         ],
         "walk": [
-        "walk", "walking", "walked", "walk journey", "walk trip", "walk commute",
-        "morning walk", "evening walk", "daily walk", "trekking", "strolled",
-        "short walk", "long walk", "walk to school", "walk to office",
-        "walk to station", "on foot", "by foot", "went on foot", "foot commute",
-        "foot journey", "foot travel", "walk exercise", "nature walk", "park walk"
+            "walk", "walking", "walked", "walk journey", "walk trip", "walk commute",
+            "morning walk", "evening walk", "daily walk", "trekking", "strolled",
+            "short walk", "long walk", "walk to school", "walk to office",
+            "walk to station", "on foot", "by foot", "went on foot", "foot commute",
+            "foot journey", "foot travel", "walk exercise", "nature walk", "park walk",
+            "hiking", "trail walk", "leisure walk", "power walk", "brisk walk",
+            "walk in the park", "walk along the river", "walking tour", "walking trip",
+            "walking commute", "walking distance", "walk for fitness", "walk for health",
+            "dog walk", "walk with dog", "walk with pet", "walking path", "walkway",
+            "sidewalk walk", "footpath walk", "urban walk", "country walk", "forest walk",
+            "beach walk", "city stroll", "leisurely walk", "walkabout", "ramble", "promenade",
+            "nature trail", "morning stroll", "evening stroll", "walk for relaxation"
         ],
+
         "bus": [
-        "bus", "bus ride", "bus journey", "bus commute", "bus trip", "daily bus",
-        "school bus", "public bus", "city bus", "intercity bus", "express bus",
-        "ac bus", "delhi bus", "mumbai bus", "hyderabad bus", "bmtc bus",
-        "roadways bus", "state transport", "bus station", "bus travel", "private bus",
-        "bus to office", "bus to school", "bus sightseeing", "overnight bus", "volvo bus",
-        "luxury bus", "semi sleeper bus"
+            "bus", "bus ride", "bus journey", "bus commute", "bus trip", "daily bus",
+            "school bus", "public bus", "city bus", "intercity bus", "express bus",
+            "ac bus", "delhi bus", "mumbai bus", "hyderabad bus", "bmtc bus",
+            "roadways bus", "state transport", "bus station", "bus travel", "private bus",
+            "bus to office", "bus to school", "bus sightseeing", "overnight bus", "volvo bus",
+            "luxury bus", "semi sleeper bus", "sleeper bus", "charter bus", "tour bus",
+            "shuttle bus", "airport bus", "school transport bus", "city transport bus",
+            "interstate bus", "long distance bus", "coach bus", "double decker bus",
+            "mini bus", "local bus", "bus stop", "bus service", "bus route",
+            "bus line", "bus ticket", "bus fare", "bus operator", "bus driver",
+            "bus transfer", "bus terminal", "bus depot", "bus garage", "commuter bus",
+            "bus network", "bus fleet", "bus journey time", "bus travel pass", "bus pass",
+            "bus card", "bus lane", "bus priority lane", "electric bus", "hybrid bus",
+            "cng bus", "diesel bus", "biofuel bus", "coach travel", "coach trip",
+            "express coach", "intercity coach"
         ],
         "train": [
-        "train", "train ride", "train journey", "train commute", "train trip",
-        "daily train", "local train", "express train", "passenger train",
-        "superfast train", "ac train", "non-ac train", "suburban train",
-        "railway", "rail travel", "train to office", "train to school",
-        "overnight train", "intercity train", "rail commute", "train sightseeing",
-        "electric train", "heritage train"
+            "train", "train ride", "train journey", "train commute", "train trip",
+            "daily train", "local train", "express train", "passenger train",
+            "superfast train", "ac train", "non-ac train", "suburban train",
+            "railway", "rail travel", "train to office", "train to school",
+            "overnight train", "intercity train", "rail commute", "train sightseeing",
+            "electric train", "heritage train", "high-speed train", "bullet train",
+            "metro train", "subway train", "commuter train", "freight train",
+            "regional train", "intercity express", "long distance train", "rail transit",
+            "rail transport", "rail journey", "rail commute", "rail line",
+            "rail route", "train station", "rail station", "train platform",
+            "train ticket", "rail ticket", "rail pass", "train schedule",
+            "train timetable", "railway carriage", "railcar", "coach", "train car",
+            "train operator", "rail operator", "railway network", "rail system",
+            "train delay", "rail delay", "train stop", "rail stop"
         ],
+
         "diesel_train": [
-        "diesel train", "non-electric train", "fuel train", "old train", "polluting train",
-        "diesel powered train", "diesel rail", "diesel locomotive", "class diesel train",
-        "non green train"
+            "diesel train", "non-electric train", "fuel train", "old train", "polluting train",
+            "diesel powered train", "diesel rail", "diesel locomotive", "class diesel train",
+            "non green train", "diesel engine train", "diesel passenger train",
+            "diesel freight train", "diesel multiple unit", "dmus", "diesel railcar",
+            "diesel powered locomotive", "fuel-based train", "conventional train",
+            "legacy train", "diesel rail service", "diesel powered transit"
         ],
+
         "metro": [
-        "metro", "metro ride", "metro journey", "metro commute", "metro trip",
-        "metro train", "subway", "tube", "underground metro", "delhi metro",
-        "mumbai metro", "bangalore metro", "hyd metro", "light rail",
-        "mass transit", "metro station", "metro travel", "metro to office",
-        "metro to school", "metro sightseeing"
+            "metro", "metro ride", "metro journey", "metro commute", "metro trip",
+            "metro train", "subway", "tube", "underground metro", "delhi metro",
+            "mumbai metro", "bangalore metro", "hyd metro", "light rail",
+            "mass transit", "metro station", "metro travel", "metro to office",
+            "metro to school", "metro sightseeing", "rapid transit", "urban rail",
+            "city metro", "metro rail", "metro line", "metro network",
+            "metro card", "metro ticket", "metro pass", "metro platform",
+            "metro shuttle", "metro express", "metro service", "metro system",
+            "metro rail journey", "metro ride home", "metro ride work",
+            "metro subway", "metro underground", "metro transit"
         ],
+
         "auto": [
-        "auto", "auto ride", "rickshaw", "autorickshaw", "rickshaw ride",
-        "auto commute", "three wheeler", "yellow auto", "green auto", "shared auto",
-        "auto trip", "auto to office", "auto to tuktuk", "autorickshaw ride",
-        "battery auto"
+            "auto", "auto ride", "rickshaw", "autorickshaw", "rickshaw ride",
+            "auto commute", "three wheeler", "yellow auto", "green auto", "shared auto",
+            "auto trip", "auto to office", "auto to tuktuk", "autorickshaw ride",
+            "battery auto", "electric auto", "e-auto", "auto rickshaw", "shared rickshaw",
+            "auto hire", "auto taxi", "auto cab", "auto fare", "auto booking",
+            "auto driver", "rickshaw driver", "auto stand", "auto stop",
+            "auto route", "auto service", "auto shuttle", "auto transport"
         ],
+
         "cab": [
-        "cab", "cab ride", "ola", "uber", "taxi", "booked cab", "private cab",
-        "hired cab", "cab trip", "cab commute", "cab booking", "taxi service",
-        "app cab", "rental cab", "cab to airport", "cab to office", "shared cab",
-        "cabpool", "budget cab", "luxury cab"
+            "cab", "cab ride", "ola", "uber", "taxi", "booked cab", "private cab",
+            "hired cab", "cab trip", "cab commute", "cab booking", "taxi service",
+            "app cab", "rental cab", "cab to airport", "cab to office", "shared cab",
+            "cabpool", "budget cab", "luxury cab", "airport cab", "city cab",
+            "yellow cab", "black cab", "ride hailing", "ride share", "taxi cab",
+            "taxi ride", "taxi booking", "taxi driver", "taxi fare", "cab fare",
+            "cab driver", "cab service", "cab company", "cab dispatch", "cab queue"
         ],
         "e_rickshaw": [
-        "e rickshaw", "e-rickshaw", "electric rickshaw", "battery rickshaw",
-        "electric tuk tuk", "ev rickshaw", "eco rickshaw", "green rickshaw",
-        "e auto", "electric three wheeler", "battery tuk tuk", "e-rick ride",
-        "e-rick commute", "electric rickshaw ride", "electric rickshaw trip"
+            "e rickshaw", "e-rickshaw", "electric rickshaw", "battery rickshaw",
+            "electric tuk tuk", "ev rickshaw", "eco rickshaw", "green rickshaw",
+            "e auto", "electric three wheeler", "battery tuk tuk", "e-rick ride",
+            "e-rick commute", "electric rickshaw ride", "electric rickshaw trip",
+            "electric rikshaw", "battery powered rickshaw", "electric tuk-tuk",
+            "e-rickshaw taxi", "electric tricycle", "electric trike", "eco friendly rickshaw",
+            "zero emission rickshaw", "electric auto rickshaw", "electric tricycle taxi",
+            "electric rikshaw ride", "battery powered auto", "e-rickshaw service"
         ],
+
         "flight_domestic": [
-        "domestic flight", "flight within india", "short flight", "air india flight",
-        "indigo domestic", "spicejet", "go air", "akasa", "vistara", "jet airways",
-        "air india express", "domestic air travel", "flight to delhi", "flight to mumbai",
-        "flight to bangalore", "flight to chennai", "office flight", "flight commute",
-        "daily flight", "weekend flight"
+            "domestic flight", "flight within india", "short flight", "air india flight",
+            "indigo domestic", "spicejet", "go air", "akasa", "vistara", "jet airways",
+            "air india express", "domestic air travel", "flight to delhi", "flight to mumbai",
+            "flight to bangalore", "flight to chennai", "office flight", "flight commute",
+            "daily flight", "weekend flight", "regional flight", "internal flight",
+            "inland flight", "local flight", "domestic airline", "short haul flight",
+            "budget domestic flight", "domestic airliner", "domestic flight ticket",
+            "india flight", "interstate flight"
         ],
+
         "flight_international": [
-        "international flight", "overseas flight", "long haul flight",
-        "foreign trip", "flight abroad", "international air travel", "air france",
-        "emirates", "qatar airways", "british airways", "etihad", "lufthansa",
-        "singapore airlines", "american airlines", "flight to usa", "flight to uk",
-        "flight to australia", "flight to canada", "flight to europe"
+            "international flight", "overseas flight", "long haul flight",
+            "foreign trip", "flight abroad", "international air travel", "air france",
+            "emirates", "qatar airways", "british airways", "etihad", "lufthansa",
+            "singapore airlines", "american airlines", "flight to usa", "flight to uk",
+            "flight to australia", "flight to canada", "flight to europe",
+            "intercontinental flight", "transatlantic flight", "transpacific flight",
+            "global flight", "international airline", "long distance flight",
+            "international airliner", "international flight ticket",
+            "overseas airline", "international flight booking", "business class flight",
+            "economy class flight", "first class flight"
         ]
+
     },
 
     "food": {
-        "milk": ["milk","amul milk","cow milk","buffalo milk","toned milk","skimmed milk","full cream milk","double toned milk","homogenized milk","pasteurized milk","oral rehydration milk","flavored milk","strawberry milk","chocolate milk"],
-        "paneer": ["paneer","cottage cheese","amul paneer","paneer bhurji","paneer tikka","paneer butter masala","grilled paneer","smoked paneer"],
-        "cheese": ["cheese","cheddar","mozzarella","processed cheese","cream cheese","parmesan","pizza cheese","blue cheese","feta cheese","gouda","edam"],
-        "butter": ["butter","salted butter","unsalted butter","ghee butter mix","creamy butter","fresh butter","cultured butter"],
-        "ghee": ["ghee","clarified butter","desi ghee","pure ghee","cow ghee","buffalo ghee"],
-        "cream": ["cream","fresh cream","malai","heavy cream","whipped cream","single cream","double cream"],
-        "yogurt": ["yogurt","dahi","greek yogurt","curd","flavored yogurt","yoghurt"],
-        "rice": ["rice","white rice","basmati","brown rice","steamed rice","fried rice","jeera rice","pulao rice","rice bowl","sushi rice"],
-        "wheat": ["wheat","atta","whole wheat","chakki atta","durum wheat","wheat grain"],
-        "maida": ["maida","refined flour","all purpose flour","white flour"],
-        "bread": ["bread","brown bread","white bread","whole grain bread","multigrain bread","bun","baguette","roll","pav"],
-        "chapati": ["chapati","roti","phulka","rumali roti","missi roti","tandoori roti"],
-        "paratha": ["paratha","stuffed paratha","aloo paratha","meth ki paratha","lachha paratha","paneer paratha"],
-        "poha": ["poha","flattened rice","poha tikka","kanda poha","indori poha"],
-        "idli": ["idli","steamed idli","rice idli","mini idli"],
-        "dosa": ["dosa","masala dosa","plain dosa","rava dosa","set dosa","paper dosa"],
-        "upma": ["upma","semolina upma","sooji upma","veg upma","rava upma"],
-        "chicken": ["chicken","chicken curry","fried chicken","grilled chicken","chicken tikka","tandoori chicken","butter chicken"],
-        "fish": ["fish","fried fish","grilled fish","salmon","rohu","pomfret","tuna","fish curry"],
-        "egg": ["egg","boiled egg","scrambled egg","omelet","omelette","fried egg","egg curry"],
-        "beef": ["beef","steak","roast beef","beef burger","beef curry"],
-        "lamb": ["lamb","mutton","lamb chops","lamb curry","goat meat"],
-        "meat": ["meat","nonveg","non-veg","red meat","mixed meat","pork","pork chops","rabbit meat"],
-        "vegetables": ["vegetables","veggies","sabzi","mixed vegetables","greens","veg curry","veg sabzi"],
-        "fruits": ["fruits","fruit bowl","apple","banana","orange","grapes","mango","papaya","pineapple","berries","pear","peach","kiwi","plum"],
-        "vegan": ["vegan","plant based","tofu","soy milk","vegan burger","vegan wrap","vegan cheese"],
-        "junk": ["junk food","pizza","burger","fries","kfc","mcd","dominos","samosa","pani puri","vada pav","donut","hot dog","nachos","corn dog","onion rings","popcorn"],
-        "processed": ["processed food","packet food","instant noodles","maggi","canned food","ready to eat","frozen meal","tv dinner"],
-        "icecream": ["ice cream","icecream","kulfi","gelato","sundae","ice popsicle"],
-        "coffee": ["coffee","filter coffee","cold coffee","espresso","latte","cappuccino","americano","mocha","flat white"],
-        "tea": ["tea","chai","green tea","black tea","masala chai","herbal tea","lemon tea"],
-        "sugar": ["sugar","white sugar","brown sugar","castor sugar","icingsugar"],
-        "oil": ["oil","cooking oil","vegetable oil","mustard oil","olive oil","sunflower oil","coconut oil","sesame oil","peanut oil"],
-        "noodles": ["noodles","instant noodles","ramen","maggi noodles","hakka noodles","chow mein"],
-        "chocolate": ["chocolate","dark chocolate","milk chocolate","choc bar","truffle","chocolate syrup"],
-        "soft drink": ["soft drink","soda","coke","pepsi","fanta","sprite","dairy milk drink","energy drink"],
-        "juice": ["juice","orange juice","apple juice","mango juice","mixed fruit juice","carrot juice","tomato juice","sugarcane juice"]
+        "milk": [
+            "milk", "amul milk", "cow milk", "buffalo milk", "toned milk", "skimmed milk", 
+            "full cream milk", "double toned milk", "homogenized milk", "pasteurized milk", 
+            "oral rehydration milk", "flavored milk", "strawberry milk", "chocolate milk",
+            "condensed milk", "evaporated milk", "powdered milk", "goat milk", "almond milk",
+            "soy milk", "rice milk", "oat milk", "coconut milk", "milkshake"
+        ],
+        "paneer": [
+            "paneer", "cottage cheese", "amul paneer", "paneer bhurji", "paneer tikka", 
+            "paneer butter masala", "grilled paneer", "smoked paneer", "tofu paneer"
+        ],
+        "cheese": [
+            "cheese", "cheddar", "mozzarella", "processed cheese", "cream cheese", "parmesan", 
+            "pizza cheese", "blue cheese", "feta cheese", "gouda", "edam", "swiss cheese",
+            "brie", "camembert", "roquefort", "goat cheese", "paneer cheese"
+        ],
+        "butter": [
+            "butter", "salted butter", "unsalted butter", "ghee butter mix", "creamy butter", 
+            "fresh butter", "cultured butter", "whipped butter", "dairy butter"
+        ],
+        "ghee": [
+            "ghee", "clarified butter", "desi ghee", "pure ghee", "cow ghee", "buffalo ghee", 
+            "organic ghee"
+        ],
+        "cream": [
+            "cream", "fresh cream", "malai", "heavy cream", "whipped cream", "single cream", 
+            "double cream", "clotted cream", "sour cream"
+        ],
+        "yogurt": [
+            "yogurt", "dahi", "greek yogurt", "curd", "flavored yogurt", "yoghurt", 
+            "strained yogurt", "low-fat yogurt", "non-fat yogurt"
+        ],
+        "rice": [
+            "rice", "white rice", "basmati", "brown rice", "steamed rice", "fried rice", 
+            "jeera rice", "pulao rice", "rice bowl", "sushi rice", "parboiled rice", 
+            "wild rice", "jasmine rice", "arborio rice"
+        ],
+        "wheat": [
+            "wheat", "atta", "whole wheat", "chakki atta", "durum wheat", "wheat grain",
+            "wheat flour", "wheat bran"
+        ],
+        "maida": [
+            "maida", "refined flour", "all purpose flour", "white flour"
+        ],
+        "bread": [
+            "bread", "brown bread", "white bread", "whole grain bread", "multigrain bread", 
+            "bun", "baguette", "roll", "pav", "ciabatta", "focaccia", "naan", "bread loaf",
+            "rye bread", "sourdough", "gluten free bread", "flatbread"
+        ],
+        "chapati": [
+            "chapati", "roti", "phulka", "rumali roti", "missi roti", "tandoori roti", 
+            "whole wheat roti", "bajra roti", "jowar roti"
+        ],
+        "paratha": [
+            "paratha", "stuffed paratha", "aloo paratha", "meth ki paratha", "lachha paratha", 
+            "paneer paratha", "gobi paratha", "mooli paratha", "onion paratha"
+        ],
+        "poha": [
+            "poha", "flattened rice", "poha tikka", "kanda poha", "indori poha", 
+            "fried poha", "spiced poha"
+        ],
+        "idli": [
+            "idli", "steamed idli", "rice idli", "mini idli", "rava idli", "stuffed idli"
+        ],
+        "dosa": [
+            "dosa", "masala dosa", "plain dosa", "rava dosa", "set dosa", "paper dosa", 
+            "onion dosa", "cheese dosa"
+        ],
+        "upma": [
+            "upma", "semolina upma", "sooji upma", "veg upma", "rava upma", "instant upma"
+        ],
+        "chicken": [
+            "chicken", "chicken curry", "fried chicken", "grilled chicken", "chicken tikka", 
+            "tandoori chicken", "butter chicken", "chicken biryani", "chicken stew"
+        ],
+        "fish": [
+            "fish", "fried fish", "grilled fish", "salmon", "rohu", "pomfret", "tuna", 
+            "fish curry", "fish fry", "baked fish", "fish fillet"
+        ],
+        "egg": [
+            "egg", "boiled egg", "scrambled egg", "omelet", "omelette", "fried egg", "egg curry", 
+            "egg bhurji", "egg sandwich"
+        ],
+        "beef": [
+            "beef", "steak", "roast beef", "beef burger", "beef curry", "ground beef"
+        ],
+        "lamb": [
+            "lamb", "mutton", "lamb chops", "lamb curry", "goat meat", "roast lamb"
+        ],
+        "meat": [
+            "meat", "nonveg", "non-veg", "red meat", "mixed meat", "pork", "pork chops", "rabbit meat",
+            "veal", "game meat", "bacon", "ham"
+        ],
+        "vegetables": [
+            "vegetables", "veggies", "sabzi", "mixed vegetables", "greens", "veg curry", "veg sabzi",
+            "carrots", "spinach", "broccoli", "cauliflower", "peas", "beans", "cabbage", "tomatoes"
+        ],
+        "fruits": [
+            "fruits", "fruit bowl", "apple", "banana", "orange", "grapes", "mango", "papaya", 
+            "pineapple", "berries", "pear", "peach", "kiwi", "plum", "watermelon", "melon",
+            "strawberry", "blueberry", "raspberry", "blackberry", "cherry"
+        ],
+        "vegan": [
+            "vegan", "plant based", "tofu", "soy milk", "vegan burger", "vegan wrap", "vegan cheese", 
+            "seitan", "tempeh", "jackfruit", "nut milk", "almond milk", "cashew milk"
+        ],
+        "junk": [
+            "junk food", "pizza", "burger", "fries", "kfc", "mcd", "dominos", "samosa", "pani puri", 
+            "vada pav", "donut", "hot dog", "nachos", "corn dog", "onion rings", "popcorn", 
+            "fried snacks", "chips", "fast food", "junk snacks"
+        ],
+        "processed": [
+            "processed food", "packet food", "instant noodles", "maggi", "canned food", "ready to eat",
+            "frozen meal", "tv dinner", "instant soup", "packaged snacks"
+        ],
+        "icecream": [
+            "ice cream", "icecream", "kulfi", "gelato", "sundae", "ice popsicle", "frozen yogurt",
+            "ice lolly"
+        ],
+        "coffee": [
+            "coffee", "filter coffee", "cold coffee", "espresso", "latte", "cappuccino", "americano", 
+            "mocha", "flat white", "instant coffee", "coffee powder"
+        ],
+        "tea": [
+            "tea", "chai", "green tea", "black tea", "masala chai", "herbal tea", "lemon tea", 
+            "iced tea", "tea bag", "earl grey", "oolong tea"
+        ],
+        "sugar": [
+            "sugar", "white sugar", "brown sugar", "castor sugar", "icing sugar", "raw sugar", 
+            "powdered sugar", "cane sugar"
+        ],
+        "oil": [
+            "oil", "cooking oil", "vegetable oil", "mustard oil", "olive oil", "sunflower oil", 
+            "coconut oil", "sesame oil", "peanut oil", "canola oil", "corn oil", "groundnut oil"
+        ],
+        "noodles": [
+            "noodles", "instant noodles", "ramen", "maggi noodles", "hakka noodles", "chow mein", 
+            "egg noodles", "rice noodles", "udon", "soba"
+        ],
+        "chocolate": [
+            "chocolate", "dark chocolate", "milk chocolate", "choc bar", "truffle", "chocolate syrup",
+            "chocolate spread", "chocolate chips"
+        ],
+        "soft drink": [
+            "soft drink", "soda", "coke", "pepsi", "fanta", "sprite", "dairy milk drink", "energy drink",
+            "carbonated drink", "cola"
+        ],
+        "juice": [
+            "juice", "orange juice", "apple juice", "mango juice", "mixed fruit juice", "carrot juice",
+            "tomato juice", "sugarcane juice", "pomegranate juice", "grape juice", "cranberry juice"
+        ]
     },
 
     "shopping": {
